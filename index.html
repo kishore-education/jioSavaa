@@ -35,6 +35,107 @@
             from { opacity: 0; transform: translateY(-5px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        /* Song detail modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-container {
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            background-color: #2d2d3a;
+            border-radius: 0.75rem;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            transform: translateY(-20px);
+            transition: transform 0.3s;
+            position: relative;
+        }
+        
+        .modal-overlay.active .modal-container {
+            transform: translateY(0);
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            z-index: 1;
+            transition: background-color 0.2s;
+        }
+        
+        .modal-close:hover {
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        
+        .modal-header {
+            padding-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .song-detail-content {
+            padding: 1rem 0;
+        }
+        
+        .song-detail-tag {
+            display: inline-block;
+            background-color: rgba(167, 139, 250, 0.2);
+            color: #a78bfa;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            margin: 0.25rem;
+        }
+        
+        .song-detail-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 0;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(167, 139, 250, 0.3);
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: spinner 1s linear infinite;
+        }
+        
+        @keyframes spinner {
+            to { transform: rotate(360deg); }
+        }
         .suggestion-item {
             padding: 0.75rem 1rem;
             cursor: pointer;
@@ -117,6 +218,44 @@
         <!-- Song Results Section -->
         <div id="results-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <!-- Results will be dynamically inserted here -->
+        </div>
+        
+        <!-- Song Detail Modal -->
+        <div id="song-detail-modal" class="modal-overlay">
+            <div class="modal-container">
+                <button id="modal-close" class="modal-close">&times;</button>
+                <div class="p-6">
+                    <div class="modal-header">
+                        <div class="flex items-center">
+                            <div class="w-24 h-24 mr-4 overflow-hidden rounded-lg shadow-lg">
+                                <img id="modal-song-image" src="" alt="" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <h2 id="modal-song-title" class="text-2xl font-bold text-white mb-1"></h2>
+                                <p id="modal-song-artist" class="text-gray-300"></p>
+                                <p id="modal-song-album" class="text-gray-400 text-sm"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="song-detail-content" class="song-detail-content">
+                        <div id="song-detail-loading" class="song-detail-loading">
+                            <div class="loading-spinner mb-4"></div>
+                            <p>Fetching song details...</p>
+                        </div>
+                        
+                        <div id="song-detail-info" class="hidden">
+                            <!-- Details will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center mt-4">
+                        <a id="modal-download-button" href="#" download="" class="px-6 py-2 bg-purple-600 text-white font-bold rounded-full hover:bg-purple-700 transition-colors duration-200">
+                            Download Song
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -432,15 +571,36 @@
                                         ${year ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${year}</span>` : ''}
                                         ${quality ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${quality}</span>` : ''}
                                     </div>
-                                    ${downloadUrl ? 
-                                      `<a href="${downloadUrl}" download="${songName}.mp3" class="mt-auto px-4 py-2 bg-purple-600 text-white font-bold text-center rounded-full hover:bg-purple-700 transition-colors duration-200">
-                                          Download HQ${quality ? ` (${quality})` : ''}
-                                      </a>` : 
-                                      `<span class="mt-auto px-4 py-2 bg-gray-500 text-white font-bold text-center rounded-full cursor-not-allowed">
-                                          Download Unavailable
-                                      </span>`}
+                                    <div class="flex flex-col gap-2">
+                                        <button class="view-details-btn w-full px-4 py-2 bg-blue-600 text-white font-bold text-center rounded-full hover:bg-blue-700 transition-colors duration-200">
+                                            View Details
+                                        </button>
+                                        ${downloadUrl ? 
+                                          `<a href="${downloadUrl}" download="${songName}.mp3" class="w-full px-4 py-2 bg-purple-600 text-white font-bold text-center rounded-full hover:bg-purple-700 transition-colors duration-200">
+                                              Download HQ${quality ? ` (${quality})` : ''}
+                                          </a>` : 
+                                          `<span class="w-full px-4 py-2 bg-gray-500 text-white font-bold text-center rounded-full cursor-not-allowed">
+                                              Download Unavailable
+                                          </span>`}
+                                    </div>
                                 </div>
                             `;
+                            // Add event listener to view details button
+                            const viewDetailsBtn = songCard.querySelector('.view-details-btn');
+                            viewDetailsBtn.addEventListener('click', () => {
+                                const songData = {
+                                    name: songName,
+                                    artist: artistName,
+                                    album: albumName,
+                                    image: image,
+                                    downloadUrl: downloadUrl,
+                                    quality: quality,
+                                    year: year,
+                                    language: language
+                                };
+                                showSongDetails(songData);
+                            });
+                            
                             resultsContainer.appendChild(songCard);
                         });
                     } else {
@@ -479,12 +639,14 @@
 
             // Gemini API configuration
             const GEMINI_API_KEY = 'AIzaSyBzeBqXflk2kR3c2x86xPK6awkxQhwsJqA';
-            const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+            const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+            const GEMINI_DETAIL_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent';
             let typingTimer;
             const TYPING_DELAY = 150; // reduced from 500ms for faster suggestions
             
             // Suggestion cache to speed up repeat searches
             const suggestionCache = new Map();
+            const songDetailsCache = new Map();
             const CACHE_EXPIRY = 60 * 60 * 1000; // Cache entries expire after 1 hour
             
             // Function to get search suggestions from Gemini API
@@ -791,6 +953,237 @@
                     fetchSongs(query);
                 }
             });
+            
+            // Modal elements
+            const songDetailModal = document.getElementById('song-detail-modal');
+            const modalClose = document.getElementById('modal-close');
+            const modalSongTitle = document.getElementById('modal-song-title');
+            const modalSongArtist = document.getElementById('modal-song-artist');
+            const modalSongAlbum = document.getElementById('modal-song-album');
+            const modalSongImage = document.getElementById('modal-song-image');
+            const modalDownloadButton = document.getElementById('modal-download-button');
+            const songDetailLoading = document.getElementById('song-detail-loading');
+            const songDetailInfo = document.getElementById('song-detail-info');
+            
+            // Close modal when clicking the close button or outside the modal
+            modalClose.addEventListener('click', () => {
+                songDetailModal.classList.remove('active');
+            });
+            
+            songDetailModal.addEventListener('click', (e) => {
+                if (e.target === songDetailModal) {
+                    songDetailModal.classList.remove('active');
+                }
+            });
+            
+            // Function to get song details from Gemini
+            const getSongDetails = async (songInfo) => {
+                const cacheKey = `${songInfo.name}-${songInfo.artist}`;
+                
+                // Check cache first
+                if (songDetailsCache.has(cacheKey)) {
+                    const { details, timestamp } = songDetailsCache.get(cacheKey);
+                    if (Date.now() - timestamp < CACHE_EXPIRY) {
+                        console.log('Using cached song details');
+                        return details;
+                    } else {
+                        songDetailsCache.delete(cacheKey);
+                    }
+                }
+                
+                try {
+                    const prompt = `
+                    I need detailed information about this song:
+                    Song Name: "${songInfo.name}"
+                    Artist: "${songInfo.artist}"
+                    Album: "${songInfo.album || 'Unknown'}"
+                    
+                    Please provide the following information in JSON format:
+                    1. A brief background about the song (when it was released, significance, etc.)
+                    2. Information about the artist
+                    3. Genre and musical style
+                    4. Notable lyrics or themes (if it's a significant song)
+                    5. Reception and popularity
+                    6. Related songs that fans might enjoy
+                    
+                    Format your response as a valid JSON object with these keys:
+                    {
+                      "background": "...",
+                      "artistInfo": "...",
+                      "genre": "...",
+                      "themes": "...",
+                      "reception": "...",
+                      "relatedSongs": ["Song 1", "Song 2", "Song 3"],
+                      "tags": ["tag1", "tag2", "tag3"]
+                    }
+                    
+                    Respond ONLY with the JSON. No other text.
+                    `;
+                    
+                    const response = await fetch(`${GEMINI_DETAIL_URL}?key=${GEMINI_API_KEY}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [
+                                {
+                                    parts: [
+                                        {
+                                            text: prompt
+                                        }
+                                    ]
+                                }
+                            ],
+                            generationConfig: {
+                                temperature: 0.2,
+                                maxOutputTokens: 1024
+                            }
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Gemini API error: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    const textResponse = data.candidates[0].content.parts[0].text;
+                    
+                    // Parse the JSON response
+                    let details;
+                    try {
+                        // Try to extract JSON from the response
+                        const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            details = JSON.parse(jsonMatch[0]);
+                        } else {
+                            throw new Error('No JSON found in response');
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse song details JSON:', e);
+                        details = {
+                            background: "Information not available at this moment.",
+                            artistInfo: "Details about the artist could not be retrieved.",
+                            genre: "Unknown",
+                            themes: "Not available",
+                            reception: "Information not available",
+                            relatedSongs: [],
+                            tags: ["music"]
+                        };
+                    }
+                    
+                    // Save to cache
+                    songDetailsCache.set(cacheKey, {
+                        details,
+                        timestamp: Date.now()
+                    });
+                    
+                    return details;
+                } catch (error) {
+                    console.error('Error fetching song details:', error);
+                    return {
+                        background: "Information not available at this moment.",
+                        artistInfo: "Details about the artist could not be retrieved.",
+                        genre: "Unknown",
+                        themes: "Not available",
+                        reception: "Information not available",
+                        relatedSongs: [],
+                        tags: ["music"]
+                    };
+                }
+            };
+            
+            // Function to show song details in modal
+            const showSongDetails = async (song) => {
+                // Display song basic info
+                modalSongTitle.textContent = song.name;
+                modalSongArtist.textContent = song.artist;
+                modalSongAlbum.textContent = song.album || '';
+                modalSongImage.src = song.image;
+                modalSongImage.onerror = () => {
+                    modalSongImage.src = 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                };
+                
+                // Set download button
+                if (song.downloadUrl) {
+                    modalDownloadButton.href = song.downloadUrl;
+                    modalDownloadButton.download = `${song.name}.mp3`;
+                    modalDownloadButton.classList.remove('bg-gray-500', 'cursor-not-allowed');
+                    modalDownloadButton.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                    modalDownloadButton.textContent = `Download ${song.quality ? `(${song.quality})` : ''}`;
+                } else {
+                    modalDownloadButton.removeAttribute('href');
+                    modalDownloadButton.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+                    modalDownloadButton.classList.add('bg-gray-500', 'cursor-not-allowed');
+                    modalDownloadButton.textContent = 'Download Unavailable';
+                }
+                
+                // Show loading state
+                songDetailLoading.classList.remove('hidden');
+                songDetailInfo.classList.add('hidden');
+                songDetailInfo.innerHTML = '';
+                
+                // Show modal
+                songDetailModal.classList.add('active');
+                
+                // Fetch song details from Gemini
+                const details = await getSongDetails(song);
+                
+                // Hide loading state
+                songDetailLoading.classList.add('hidden');
+                songDetailInfo.classList.remove('hidden');
+                
+                // Populate details
+                const detailHTML = `
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-purple-400 mb-2">About this Song</h3>
+                        <p class="text-gray-300">${details.background}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Artist</h3>
+                        <p class="text-gray-300">${details.artistInfo}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Genre & Style</h3>
+                        <p class="text-gray-300">${details.genre}</p>
+                    </div>
+                    
+                    ${details.themes ? `
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Themes & Lyrics</h3>
+                        <p class="text-gray-300">${details.themes}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${details.reception ? `
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Reception</h3>
+                        <p class="text-gray-300">${details.reception}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${details.relatedSongs && details.relatedSongs.length > 0 ? `
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-purple-400 mb-2">You Might Also Like</h3>
+                        <ul class="list-disc list-inside text-gray-300 ml-2">
+                            ${details.relatedSongs.map(song => `<li>${song}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    
+                    ${details.tags && details.tags.length > 0 ? `
+                    <div class="mt-4">
+                        <div class="flex flex-wrap gap-1">
+                            ${details.tags.map(tag => `<span class="song-detail-tag">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+                
+                songDetailInfo.innerHTML = detailHTML;
+            };
         });
     </script>
 </body>
