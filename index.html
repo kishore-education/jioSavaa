@@ -15,6 +15,53 @@
         .container {
             max-width: 1200px;
         }
+        /* Styles for search suggestions */
+        .suggestion-container {
+            position: absolute;
+            width: 100%;
+            background-color: #2d2d3a;
+            border-radius: 0.5rem;
+            margin-top: 0.25rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            animation: fadeIn 0.1s ease-out;
+            will-change: transform, opacity;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .suggestion-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .suggestion-item:hover {
+            background-color: #3a3a4a;
+            border-left: 3px solid #a78bfa;
+            padding-left: 1.25rem;
+        }
+        .suggestion-item:active {
+            background-color: #4c4c5e;
+            transform: translateY(1px);
+        }
+        .suggestion-highlight {
+            color: #a78bfa;
+            font-weight: 500;
+        }
+        .suggestion-item.selected {
+            background-color: #4c4c5e;
+            border-left: 3px solid #a78bfa;
+        }
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center p-4">
@@ -28,12 +75,16 @@
 
         <!-- Search Section -->
         <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
-            <input
-                id="search-input"
-                type="text"
-                placeholder="Search for a song, artist, or album..."
-                class="w-full md:w-2/3 lg:w-1/2 px-5 py-3 rounded-full text-gray-900 bg-gray-200 border-2 border-transparent focus:outline-none focus:border-purple-500 transition-colors duration-300 shadow-md"
-            >
+            <div class="search-wrapper w-full md:w-2/3 lg:w-1/2">
+                <input
+                    id="search-input"
+                    type="text"
+                    placeholder="Search for a song, artist, or album..."
+                    class="w-full px-5 py-3 rounded-full text-gray-900 bg-gray-200 border-2 border-transparent focus:outline-none focus:border-purple-500 transition-colors duration-300 shadow-md"
+                    autocomplete="off"
+                >
+                <div id="suggestion-container" class="suggestion-container"></div>
+            </div>
             <button
                 id="search-button"
                 class="w-full md:w-1/4 lg:w-1/6 px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-transform duration-200 transform hover:scale-105"
@@ -79,6 +130,7 @@
             const artistFilterInput = document.getElementById('artist-filter');
             const yearFilterInput = document.getElementById('year-filter');
             const languageFilterInput = document.getElementById('language-filter');
+            const suggestionContainer = document.getElementById('suggestion-container');
 
             // API base URLs
             // Primary API URL - This is the documented API endpoint
@@ -425,6 +477,307 @@
                 }
             };
 
+            // Gemini API configuration
+            const GEMINI_API_KEY = 'AIzaSyBzeBqXflk2kR3c2x86xPK6awkxQhwsJqA';
+            const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+            let typingTimer;
+            const TYPING_DELAY = 150; // reduced from 500ms for faster suggestions
+            
+            // Suggestion cache to speed up repeat searches
+            const suggestionCache = new Map();
+            const CACHE_EXPIRY = 60 * 60 * 1000; // Cache entries expire after 1 hour
+            
+            // Function to get search suggestions from Gemini API
+            const getSuggestions = async (query) => {
+                if (!query || query.length < 2) {
+                    suggestionContainer.style.display = 'none';
+                    return;
+                }
+                
+                // Check cache first
+                const cacheKey = query.toLowerCase();
+                if (suggestionCache.has(cacheKey)) {
+                    const { suggestions, timestamp } = suggestionCache.get(cacheKey);
+                    // Use cache if it's not expired
+                    if (Date.now() - timestamp < CACHE_EXPIRY) {
+                        console.log('Using cached suggestions for:', query);
+                        displaySuggestions(suggestions, query);
+                        return;
+                    } else {
+                        // Remove expired cache entry
+                        suggestionCache.delete(cacheKey);
+                    }
+                }
+                
+                // Show loading indicator for new searches
+                suggestionContainer.innerHTML = '<div class="p-2 text-center text-gray-400">Loading suggestions...</div>';
+                suggestionContainer.style.display = 'block';
+                
+                try {
+                    const prompt = `
+                    User is searching for music with query: "${query}"
+                    
+                    Generate 5 search suggestions for music (songs, albums, or artists) that the user might be looking for.
+                    The suggestions should be related to popular music that matches the query.
+                    
+                    Format your response as a JSON array of strings only, with no explanations.
+                    Example: ["Suggestion 1", "Suggestion 2", "Suggestion 3", "Suggestion 4", "Suggestion 5"]
+                    `;
+                    
+                    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [
+                                {
+                                    parts: [
+                                        {
+                                            text: prompt
+                                        }
+                                    ]
+                                }
+                            ],
+                            generationConfig: {
+                                temperature: 0.1,  // Lower temperature for more predictable results
+                                maxOutputTokens: 100,  // Reduced for faster response
+                                topK: 10,  // Limit token selection for faster generation
+                                topP: 0.8  // Narrow probability distribution
+                            },
+                            safetySettings: [
+                                {
+                                    category: "HARM_CATEGORY_HARASSMENT",
+                                    threshold: "BLOCK_NONE"
+                                }
+                            ]
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        console.error('Gemini API error:', response.status);
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Extract the suggestions from the response
+                    const textResponse = data.candidates[0].content.parts[0].text;
+                    
+                    // Parse JSON from text response
+                    let suggestions;
+                    try {
+                        suggestions = JSON.parse(textResponse);
+                    } catch (e) {
+                        // If parsing fails, try to extract array manually
+                        const match = textResponse.match(/\[(.*?)\]/s);
+                        if (match) {
+                            try {
+                                suggestions = JSON.parse(`[${match[1]}]`);
+                            } catch (e2) {
+                                console.error('Could not parse suggestions:', e2);
+                                suggestions = [];
+                            }
+                        } else {
+                            suggestions = [];
+                        }
+                    }
+                    
+                    if (Array.isArray(suggestions) && suggestions.length > 0) {
+                        // Save to cache
+                        suggestionCache.set(query.toLowerCase(), {
+                            suggestions,
+                            timestamp: Date.now()
+                        });
+                        
+                        // Limit cache size to avoid memory issues
+                        if (suggestionCache.size > 100) {
+                            // Delete oldest entry
+                            const oldestKey = suggestionCache.keys().next().value;
+                            suggestionCache.delete(oldestKey);
+                        }
+                        
+                        displaySuggestions(suggestions, query);
+                    } else {
+                        suggestionContainer.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error fetching suggestions:', error);
+                    suggestionContainer.style.display = 'none';
+                    
+                    // Show default suggestions on error
+                    const defaultSuggestions = [
+                        `${query} songs`, 
+                        `${query} album`,
+                        `${query} artist`, 
+                        `Best of ${query}`,
+                        `Popular ${query} tracks`
+                    ];
+                    displaySuggestions(defaultSuggestions, query);
+                }
+            };
+            
+            // Function to display suggestions
+            const displaySuggestions = (suggestions, query) => {
+                suggestionContainer.innerHTML = '';
+                
+                suggestions.forEach(suggestion => {
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+                    
+                    // Highlight the matching part
+                    const lowercaseQuery = query.toLowerCase();
+                    const lowercaseSuggestion = suggestion.toLowerCase();
+                    const index = lowercaseSuggestion.indexOf(lowercaseQuery);
+                    
+                    if (index !== -1) {
+                        const before = suggestion.substring(0, index);
+                        const match = suggestion.substring(index, index + query.length);
+                        const after = suggestion.substring(index + query.length);
+                        item.innerHTML = `${before}<span class="suggestion-highlight">${match}</span>${after}`;
+                    } else {
+                        item.textContent = suggestion;
+                    }
+                    
+                    // Add enhanced click handler with visual feedback
+                    item.addEventListener('click', (e) => {
+                        // Add visual feedback
+                        item.classList.add('selected');
+                        
+                        // Set input value to suggestion
+                        searchInput.value = suggestion;
+                        
+                        // Hide the suggestion container
+                        suggestionContainer.style.display = 'none';
+                        
+                        // Trigger search with a small delay for better UX
+                        setTimeout(() => {
+                            fetchSongs(suggestion);
+                        }, 100);
+                        
+                        // Focus the input after selection
+                        searchInput.focus();
+                    });
+                    
+                    // Also trigger on mouse down for faster response
+                    item.addEventListener('mousedown', (e) => {
+                        // Prevent default to avoid losing focus on the input
+                        e.preventDefault();
+                    });
+                    
+                    // Add touch support for mobile devices
+                    item.addEventListener('touchstart', (e) => {
+                        // Add visual active state for touch
+                        item.classList.add('selected');
+                    });
+                    
+                    suggestionContainer.appendChild(item);
+                });
+                
+                suggestionContainer.style.display = 'block';
+            };
+            
+            // Handle input changes for suggestions
+            let lastQuery = '';
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(typingTimer);
+                const query = e.target.value.trim();
+                
+                if (query.length < 2) {
+                    suggestionContainer.style.display = 'none';
+                    return;
+                }
+                
+                // Prevent duplicate API calls for the same query
+                if (query === lastQuery) {
+                    return;
+                }
+                
+                // Check for prefix match in cache for instant suggestions
+                const prefixMatch = Array.from(suggestionCache.keys()).find(key => 
+                    query.toLowerCase().startsWith(key) && key.length > 2);
+                
+                if (prefixMatch) {
+                    const { suggestions } = suggestionCache.get(prefixMatch);
+                    // Filter cached suggestions to match current query
+                    const filteredSuggestions = suggestions.filter(suggestion => 
+                        suggestion.toLowerCase().includes(query.toLowerCase()));
+                    
+                    if (filteredSuggestions.length > 0) {
+                        console.log('Using prefix-matched suggestions');
+                        displaySuggestions(filteredSuggestions, query);
+                        
+                        // Still fetch new suggestions but with lower priority
+                        setTimeout(() => {
+                            if (searchInput.value.trim() === query) {
+                                getSuggestions(query);
+                            }
+                        }, 1000);
+                        
+                        return;
+                    }
+                }
+                
+                lastQuery = query;
+                
+                // Wait until typing stops before making API call
+                typingTimer = setTimeout(() => {
+                    getSuggestions(query);
+                }, TYPING_DELAY);
+            });
+            
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (e.target !== searchInput && !suggestionContainer.contains(e.target)) {
+                    suggestionContainer.style.display = 'none';
+                }
+            });
+            
+            // Handle keyboard navigation for suggestions
+            searchInput.addEventListener('keydown', (e) => {
+                const items = suggestionContainer.querySelectorAll('.suggestion-item');
+                if (!items.length) return;
+                
+                const activeItem = suggestionContainer.querySelector('.suggestion-item.selected');
+                let index = Array.from(items).indexOf(activeItem);
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (suggestionContainer.style.display === 'none') {
+                        suggestionContainer.style.display = 'block';
+                        return;
+                    }
+                    
+                    if (index < 0) {
+                        index = 0;
+                    } else {
+                        items[index].classList.remove('selected');
+                        index = (index + 1) % items.length;
+                    }
+                    items[index].classList.add('selected');
+                    items[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (suggestionContainer.style.display === 'none') return;
+                    
+                    if (index < 0) {
+                        index = items.length - 1;
+                    } else {
+                        items[index].classList.remove('selected');
+                        index = (index - 1 + items.length) % items.length;
+                    }
+                    items[index].classList.add('selected');
+                    items[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                } else if (e.key === 'Enter' && activeItem) {
+                    e.preventDefault();
+                    searchInput.value = activeItem.textContent.trim();
+                    suggestionContainer.style.display = 'none';
+                    fetchSongs(searchInput.value);
+                } else if (e.key === 'Escape') {
+                    suggestionContainer.style.display = 'none';
+                }
+            });
+            
             // Event listeners for search
             searchButton.addEventListener('click', () => {
                 const query = searchInput.value.trim();
@@ -432,8 +785,9 @@
             });
 
             searchInput.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter') {
+                if (event.key === 'Enter' && !event.isComposing) {
                     const query = searchInput.value.trim();
+                    suggestionContainer.style.display = 'none';
                     fetchSongs(query);
                 }
             });
