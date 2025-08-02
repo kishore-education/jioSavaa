@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JioSaavn Music Downloader</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .container {
+            max-width: 1200px;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center p-4">
+    <div class="container mx-auto p-6 bg-gray-800 rounded-xl shadow-lg">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                Music Downloader
+            </h1>
+            <p class="text-lg text-gray-400">Search for your favorite songs and download them.</p>
+        </header>
+
+        <!-- Search Section -->
+        <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
+            <input
+                id="search-input"
+                type="text"
+                placeholder="Search for a song, artist, or album..."
+                class="w-full md:w-2/3 lg:w-1/2 px-5 py-3 rounded-full text-gray-900 bg-gray-200 border-2 border-transparent focus:outline-none focus:border-purple-500 transition-colors duration-300 shadow-md"
+            >
+            <button
+                id="search-button"
+                class="w-full md:w-1/4 lg:w-1/6 px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-transform duration-200 transform hover:scale-105"
+            >
+                Search
+            </button>
+        </div>
+
+        <!-- Advanced Search Filters -->
+        <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
+            <input id="artist-filter" type="text" placeholder="Filter by Artist..." class="w-full md:w-1/3 px-4 py-2 rounded-full text-gray-900 bg-gray-200 border-2 border-transparent focus:outline-none focus:border-purple-500 transition-colors">
+            <input id="year-filter" type="text" placeholder="Filter by Year..." class="w-full md:w-1/3 px-4 py-2 rounded-full text-gray-900 bg-gray-200 border-2 border-transparent focus:outline-none focus:border-purple-500 transition-colors">
+            <select id="language-filter" class="w-full md:w-1/3 px-4 py-2 rounded-full text-gray-900 bg-gray-200 border-2 border-transparent focus:outline-none focus:border-purple-500 transition-colors">
+                <option value="">All Languages</option>
+                <option value="tamil">Tamil</option>
+                <option value="hindi">Hindi</option>
+                <option value="english">English</option>
+                <option value="telugu">Telugu</option>
+                <option value="malayalam">Malayalam</option>
+                <option value="kannada">Kannada</option>
+            </select>
+        </div>
+
+        <!-- Message Box for loading, errors, etc. -->
+        <div id="message-box" class="hidden mb-6 p-4 rounded-lg text-center font-medium transition-opacity duration-300">
+            <div id="loading-spinner" class="hidden mx-auto w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p id="message-text"></p>
+        </div>
+
+        <!-- Song Results Section -->
+        <div id="results-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Results will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get references to DOM elements
+            const searchInput = document.getElementById('search-input');
+            const searchButton = document.getElementById('search-button');
+            const resultsContainer = document.getElementById('results-container');
+            const messageBox = document.getElementById('message-box');
+            const artistFilterInput = document.getElementById('artist-filter');
+            const yearFilterInput = document.getElementById('year-filter');
+            const languageFilterInput = document.getElementById('language-filter');
+
+            // API base URLs
+            // Primary API URL - This is the documented API endpoint
+            const PRIMARY_API_URL = 'https://jiosaavn-api.kishoresaravanan440.workers.dev';
+            // Fallback API URLs (in case the primary is down)
+            const FALLBACK_API_URL = 'https://saavn.me';
+            const THIRD_API_URL = 'https://api.saavn.dev';
+            // Current API URL to use
+            let API_BASE_URL = PRIMARY_API_URL;
+            // Number of songs to request from the API
+            const SONGS_LIMIT = 100;
+
+            // References to message box elements
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const messageText = document.getElementById('message-text');
+
+            // Function to show a message to the user
+            const showMessage = (text, type = 'info', isLoading = false) => {
+                messageText.textContent = text;
+                messageBox.className = `mb-6 p-4 rounded-lg text-center font-medium transition-opacity duration-300 ${type === 'error' ? 'bg-red-900 text-red-200' : 'bg-blue-900 text-blue-200'} block opacity-100`;
+                
+                // Show or hide the loading spinner
+                if (isLoading) {
+                    loadingSpinner.classList.remove('hidden');
+                } else {
+                    loadingSpinner.classList.add('hidden');
+                }
+            };
+
+            // Function to clear the message box
+            const hideMessage = () => {
+                messageBox.classList.add('hidden');
+                messageBox.classList.remove('block');
+                loadingSpinner.classList.add('hidden');
+            };
+
+            // Function to fetch and display song results
+            const fetchSongs = async (query) => {
+                // Clear previous results and show loading message
+                resultsContainer.innerHTML = '';
+                if (!query) {
+                    showMessage('Please enter a song name to search.', 'error');
+                    return;
+                }
+                
+                // Get filter values
+                const artistFilter = artistFilterInput.value.trim();
+                const yearFilter = yearFilterInput.value.trim();
+                const languageFilter = languageFilterInput.value;
+                
+                // Include filters in the search query if they are set
+                let enhancedQuery = query;
+                if (artistFilter) enhancedQuery += ` ${artistFilter}`;
+                if (yearFilter) enhancedQuery += ` ${yearFilter}`;
+                if (languageFilter && languageFilter !== "") enhancedQuery += ` ${languageFilter}`;
+                
+                console.log('Enhanced search query:', enhancedQuery);
+                showMessage(`Searching for up to ${SONGS_LIMIT} songs with filters...`, 'info', true);
+
+                try {                    
+                    // Construct the search URL with the query using the correct endpoint
+                    // Different APIs have different endpoint structures
+                    // Set limit to fetch the specified number of songs from all APIs
+                    let url;
+                    if (API_BASE_URL === PRIMARY_API_URL) {
+                        url = `${API_BASE_URL}/api/search/songs?query=${encodeURIComponent(enhancedQuery)}&limit=${SONGS_LIMIT}`;
+                    } else if (API_BASE_URL === FALLBACK_API_URL) {
+                        url = `${API_BASE_URL}/api/search/songs?query=${encodeURIComponent(enhancedQuery)}&page=1&limit=${SONGS_LIMIT}`;
+                    } else {
+                        url = `${API_BASE_URL}/search/songs?query=${encodeURIComponent(enhancedQuery)}&limit=${SONGS_LIMIT}`;
+                    }
+                    
+                    console.log('Fetching from URL:', url);
+                    
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    // Check if the response is successful
+                    if (!response.ok) {
+                        console.error('API Error Status:', response.status);
+                        throw new Error(`API error: ${response.status} ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    // Handle different API response structures
+                    let songs = [];
+                    if (API_BASE_URL === PRIMARY_API_URL) {
+                        // Primary API structure (jiosaavn-api.kishoresaravanan440.workers.dev)
+                        if (data.data && Array.isArray(data.data)) {
+                            songs = data.data;
+                        } else if (data.data && data.data.results && Array.isArray(data.data.results)) {
+                            songs = data.data.results;
+                        } else if (data.results && Array.isArray(data.results)) {
+                            songs = data.results;
+                        } else {
+                            songs = data.data || [];
+                        }
+                        console.log('Found songs from primary API:', songs.length, songs);
+                    } else if (API_BASE_URL === FALLBACK_API_URL) {
+                        // Fallback API structure (saavn.me)
+                        songs = data.data?.results || data.results || [];
+                        console.log('Found songs from fallback API:', songs.length, songs);
+                    } else {
+                        // Third API structure
+                        songs = data.data || data.results || [];
+                        console.log('Found songs from third API:', songs.length, songs);
+                    }
+                    
+                    // Log raw response for debugging
+                    console.log('Raw API response:', data);
+                    
+                    // Apply additional client-side filtering for more precise results
+                    // Note: We're already including these in the API query, but we'll filter again
+                    // for more precise matching (e.g., exact year match)
+
+                    // Ensure songs is always an array
+                    if (!Array.isArray(songs)) {
+                        console.error('Songs is not an array:', songs);
+                        songs = [];
+                    }
+
+                    const filteredSongs = songs.filter(song => {
+                        if (!song) return false; // Skip null or undefined items
+                        
+                        // Handle different API response structures for artist name
+                        let artistName = '';
+                        if (song.primaryArtists) {
+                            artistName = song.primaryArtists;
+                        } else if (song.artists && song.artists.primary) {
+                            artistName = song.artists.primary.map(a => a.name).join(', ');
+                        } else if (song.artist) {
+                            artistName = typeof song.artist === 'string' ? song.artist : JSON.stringify(song.artist);
+                        }
+                        
+                        const songYear = song.year || '';
+                        const songLanguage = song.language || '';
+
+                        const artistMatch = !artistFilter || (artistName && artistName.toLowerCase().includes(artistFilter.toLowerCase()));
+                        const yearMatch = !yearFilter || (songYear && songYear.toString() === yearFilter);
+                        const languageMatch = !languageFilter || (languageFilter === "" || (songLanguage && songLanguage.toLowerCase() === languageFilter.toLowerCase()));
+
+                        return artistMatch && yearMatch && languageMatch;
+                    });
+
+                    // Check if there are songs in the data
+                    if (filteredSongs.length > 0) {
+                        hideMessage();
+                        console.log('Displaying', filteredSongs.length, 'out of', songs.length, 'songs after filtering');
+                        showMessage(`Found ${songs.length} songs, showing ${filteredSongs.length} after filtering.`, 'info');
+                        setTimeout(hideMessage, 3000); // Hide message after 3 seconds
+                        // Loop through the songs and create a card for each (show all related songs)
+                        filteredSongs.forEach((song, idx) => {
+                            // Extract song details based on API structure
+                            let songName, artistName, albumName, image, downloadUrl;
+                            
+                            if (API_BASE_URL === PRIMARY_API_URL) {
+                                songName = song.name || 'Unknown';
+                                if (song.artists && song.artists.primary) {
+                                    artistName = song.artists.primary.map(artist => artist.name).join(', ');
+                                } else {
+                                    artistName = song.primaryArtists || 'Unknown Artist';
+                                }
+                                albumName = song.album?.name || 'Unknown Album';
+                                if (song.image && song.image.length > 0) {
+                                    const img500 = song.image.find(img => img.quality === '500x500');
+                                    image = img500?.url || song.image[song.image.length - 1].url;
+                                } else {
+                                    image = 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                                }
+                                if (song.downloadUrl && Array.isArray(song.downloadUrl) && song.downloadUrl.length > 0) {
+                                    // Look for the highest quality download URL available
+                                    // First try 320kbps, then 160kbps, then the highest available
+                                    const qualityPriority = ['320kbps', '160kbps', '96kbps', '48kbps', '12kbps'];
+                                    let selectedDownload = null;
+                                    
+                                    // Try to find the best quality available according to our priority list
+                                    for (const quality of qualityPriority) {
+                                        const found = song.downloadUrl.find(dl => dl && dl.quality === quality);
+                                        if (found && found.url) {
+                                            selectedDownload = found;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    // If no match found by quality name, sort by quality if it's a number value
+                                    if (!selectedDownload) {
+                                        const sortedByQuality = [...song.downloadUrl]
+                                            .filter(dl => dl && dl.url)
+                                            .sort((a, b) => {
+                                                const qualityA = parseInt(a.quality);
+                                                const qualityB = parseInt(b.quality);
+                                                return isNaN(qualityA) || isNaN(qualityB) ? 0 : qualityB - qualityA;
+                                            });
+                                        
+                                        if (sortedByQuality.length > 0) {
+                                            selectedDownload = sortedByQuality[0];
+                                        }
+                                    }
+                                    
+                                    // If still no match, use the last one as a fallback
+                                    if (selectedDownload && selectedDownload.url) {
+                                        downloadUrl = selectedDownload.url;
+                                        console.log(`Selected download quality: ${selectedDownload.quality}`);
+                                    } else if (song.downloadUrl[song.downloadUrl.length - 1] && song.downloadUrl[song.downloadUrl.length - 1].url) {
+                                        downloadUrl = song.downloadUrl[song.downloadUrl.length - 1].url;
+                                        console.log(`Fallback to last download option`);
+                                    } else {
+                                        downloadUrl = null;
+                                    }
+                                } else {
+                                    downloadUrl = null;
+                                }
+                            } else if (API_BASE_URL === FALLBACK_API_URL) {
+                                songName = song.name || song.title || 'Unknown';
+                                artistName = song.primaryArtists || 'Unknown Artist';
+                                albumName = song.album?.name || 'Unknown Album';
+                                image = song.image?.[2]?.link || song.image || 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                                
+                                // Get highest quality download URL - for FALLBACK API
+                                if (song.downloadUrl && Array.isArray(song.downloadUrl)) {
+                                    // Try high quality options first (4 is usually 320kbps)
+                                    downloadUrl = song.downloadUrl[4]?.link || song.downloadUrl[3]?.link || 
+                                                song.downloadUrl[2]?.link || song.downloadUrl[1]?.link || 
+                                                song.downloadUrl[0]?.link || song.url;
+                                    console.log('Selected fallback API download quality:', 
+                                        song.downloadUrl.findIndex(dl => dl?.link === downloadUrl) !== -1 ? 
+                                        `Option ${song.downloadUrl.findIndex(dl => dl?.link === downloadUrl) + 1} of ${song.downloadUrl.length}` : 'URL fallback');
+                                } else {
+                                    downloadUrl = song.url;
+                                }
+                            } else {
+                                songName = song.name || song.title || 'Unknown';
+                                artistName = song.artists?.primary?.map(artist => artist.name).join(', ') || song.primaryArtists || 'Unknown Artist';
+                                albumName = song.album?.name || 'Unknown Album';
+                                image = song.image?.[2]?.url || song.image || 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                                
+                                // Get highest quality download URL - for THIRD API
+                                if (song.downloadUrl && Array.isArray(song.downloadUrl) && song.downloadUrl.length > 0) {
+                                    // Sort download URLs if they have a quality property that can be parsed as a number
+                                    const sortedDownloads = [...song.downloadUrl]
+                                        .filter(dl => dl && dl.url)
+                                        .sort((a, b) => {
+                                            // Try to extract bitrate numbers if available
+                                            const qualityA = a.quality ? parseInt(a.quality.replace(/[^0-9]/g, '')) : 0;
+                                            const qualityB = b.quality ? parseInt(b.quality.replace(/[^0-9]/g, '')) : 0;
+                                            // Higher number means better quality
+                                            return qualityB - qualityA;
+                                        });
+                                    
+                                    if (sortedDownloads.length > 0) {
+                                        downloadUrl = sortedDownloads[0].url;
+                                        console.log('Selected third API download quality:', sortedDownloads[0].quality || 'Highest available');
+                                    } else {
+                                        downloadUrl = song.url;
+                                    }
+                                } else {
+                                    downloadUrl = song.url;
+                                }
+                            }
+                            const fallbackImage = 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                            const duration = song.duration ? `${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}` : '--:--';
+                            const language = song.language ? song.language.charAt(0).toUpperCase() + song.language.slice(1) : '';
+                            const year = song.year || '';
+                            // Get quality info for the selected download URL
+                            let quality = '';
+                            if (song.downloadUrl && Array.isArray(song.downloadUrl) && song.downloadUrl.length > 0) {
+                                const selectedDownload = song.downloadUrl.find(dl => dl && dl.url === downloadUrl);
+                                if (selectedDownload && selectedDownload.quality) {
+                                    quality = selectedDownload.quality;
+                                } else {
+                                    // If we can't find the exact download URL match, use the highest quality label
+                                    const sortedByQuality = [...song.downloadUrl]
+                                        .filter(dl => dl && dl.quality)
+                                        .sort((a, b) => {
+                                            const qualityA = parseInt(a.quality);
+                                            const qualityB = parseInt(b.quality);
+                                            return isNaN(qualityA) || isNaN(qualityB) ? 0 : qualityB - qualityA;
+                                        });
+                                    quality = sortedByQuality.length > 0 ? sortedByQuality[0].quality : '320kbps';
+                                }
+                            }
+                            const songCard = document.createElement('div');
+                            songCard.className = 'bg-gray-700 rounded-xl shadow-lg overflow-hidden flex flex-col transition-transform duration-200 hover:scale-105';
+                            songCard.innerHTML = `
+                                <img src="${image}" alt="${songName}" class="w-full h-48 object-cover" onerror="this.src='${fallbackImage}'">
+                                <div class="p-4 flex flex-col flex-grow">
+                                    <h3 class="text-xl font-bold mb-1 truncate">${songName}</h3>
+                                    <p class="text-sm text-gray-300 truncate">Artist: ${artistName}</p>
+                                    <p class="text-sm text-gray-400 truncate">Album: ${albumName}</p>
+                                    <div class="flex flex-wrap text-xs text-gray-400 gap-2 mt-1 mb-4">
+                                        ${duration ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${duration}</span>` : ''}
+                                        ${language ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${language}</span>` : ''}
+                                        ${year ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${year}</span>` : ''}
+                                        ${quality ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${quality}</span>` : ''}
+                                    </div>
+                                    ${downloadUrl ? 
+                                      `<a href="${downloadUrl}" download="${songName}.mp3" class="mt-auto px-4 py-2 bg-purple-600 text-white font-bold text-center rounded-full hover:bg-purple-700 transition-colors duration-200">
+                                          Download HQ${quality ? ` (${quality})` : ''}
+                                      </a>` : 
+                                      `<span class="mt-auto px-4 py-2 bg-gray-500 text-white font-bold text-center rounded-full cursor-not-allowed">
+                                          Download Unavailable
+                                      </span>`}
+                                </div>
+                            `;
+                            resultsContainer.appendChild(songCard);
+                        });
+                    } else {
+                        showMessage('No songs found for your search query and filters. Please try again.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch songs:', error);
+                    
+                    // If using the primary API and it failed, try the fallback API
+                    if (API_BASE_URL === PRIMARY_API_URL) {
+                        API_BASE_URL = FALLBACK_API_URL;
+                        showMessage('Primary API failed. Trying fallback API...', 'info');
+                        console.log('Switching to fallback API:', FALLBACK_API_URL);
+                        // Try again with the fallback API
+                        setTimeout(() => fetchSongs(query), 1000);
+                        return;
+                    }
+                    // If using the fallback API and it failed, try the third API
+                    else if (API_BASE_URL === FALLBACK_API_URL) {
+                        API_BASE_URL = THIRD_API_URL;
+                        showMessage('Fallback API failed. Trying another API source...', 'info');
+                        console.log('Switching to third API:', THIRD_API_URL);
+                        // Try again with the third API
+                        setTimeout(() => fetchSongs(query), 1000);
+                        return;
+                    }
+                    
+                    // Reset to primary API for next search attempt
+                    API_BASE_URL = PRIMARY_API_URL;
+                    
+                    // If we've tried all APIs and all failed
+                    showMessage(`Error: All API endpoints failed. Please check your connection or try a different search term. Error: ${error.message}`, 'error');
+                    console.error('Full error details:', error);
+                }
+            };
+
+            // Event listeners for search
+            searchButton.addEventListener('click', () => {
+                const query = searchInput.value.trim();
+                fetchSongs(query);
+            });
+
+            searchInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    const query = searchInput.value.trim();
+                    fetchSongs(query);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
