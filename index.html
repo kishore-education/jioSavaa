@@ -3,199 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JioSaavn Music Downloader</title>
+    <title>JioSaavn Music Player</title>
     <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
-        }
-        .container {
-            max-width: 1200px;
-        }
-        /* Styles for search suggestions */
-        .suggestion-container {
-            position: absolute;
-            width: 100%;
-            background-color: #2d2d3a;
-            border-radius: 0.5rem;
-            margin-top: 0.25rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            z-index: 10;
-            max-height: 300px;
-            overflow-y: auto;
-            display: none;
-            animation: fadeIn 0.1s ease-out;
-            will-change: transform, opacity;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Song detail modal styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 50;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-        
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .modal-container {
-            width: 90%;
-            max-width: 700px;
-            max-height: 90vh;
-            background-color: #2d2d3a;
-            border-radius: 0.75rem;
-            overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            transform: translateY(-20px);
-            transition: transform 0.3s;
-            position: relative;
-        }
-        
-        .modal-overlay.active .modal-container {
-            transform: translateY(0);
-        }
-        
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background-color: rgba(0, 0, 0, 0.3);
-            border: none;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.2rem;
-            z-index: 1;
-            transition: background-color 0.2s;
-        }
-        
-        .modal-close:hover {
-            background-color: rgba(0, 0, 0, 0.6);
-        }
-        
-        .modal-header {
-            padding-bottom: 0.5rem;
-            position: relative;
-        }
-        
-        .song-detail-content {
-            padding: 1rem 0;
-        }
-        
-        .song-detail-tag {
-            display: inline-block;
-            background-color: rgba(167, 139, 250, 0.2);
-            color: #a78bfa;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            margin: 0.25rem;
-        }
-        
-        .song-detail-loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 3rem 0;
-        }
-        
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(167, 139, 250, 0.3);
-            border-top-color: #a78bfa;
-            border-radius: 50%;
-            animation: spinner 1s linear infinite;
-        }
-        
-        @keyframes spinner {
-            to { transform: rotate(360deg); }
-        }
-        .suggestion-item {
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-left: 3px solid transparent;
-        }
-        .suggestion-item:hover {
-            background-color: #3a3a4a;
-            border-left: 3px solid #a78bfa;
-            padding-left: 1.25rem;
-        }
-        .suggestion-item:active {
-            background-color: #4c4c5e;
-            transform: translateY(1px);
-        }
-        .suggestion-highlight {
-            color: #a78bfa;
-            font-weight: 500;
-        }
-        .suggestion-item.selected {
-            background-color: #4c4c5e;
-            border-left: 3px solid #a78bfa;
-        }
-        .search-wrapper {
-            position: relative;
-            width: 100%;
-        }
-    </style>
+    <link rel="stylesheet" href="css/main.css">
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center p-4">
     <div class="container mx-auto p-6 bg-gray-800 rounded-xl shadow-lg">
         <header class="text-center mb-8">
+            <div class="flex justify-between items-center mb-4 px-4">
+                <nav>
+                    <ul class="flex space-x-6">
+                        <li><a href="index.html" class="text-purple-400 border-b-2 border-purple-400 hover:text-purple-300 transition-colors">Home</a></li>
+                        <li><a href="playlist.html" class="text-gray-300 hover:text-white transition-colors">Playlists</a></li>
+                    </ul>
+                </nav>
+                <button id="top-search-icon" class="text-gray-300 hover:text-white p-2 rounded-full hover:bg-gray-700 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                    </svg>
+                </button>
+            </div>
             <h1 class="text-4xl md:text-5xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
-                Music Downloader
+                Music Player
             </h1>
-            <p class="text-lg text-gray-400">Search for your favorite songs and download them.</p>
+            <p class="text-lg text-gray-400">Search, play and create playlists of your favorite music.</p>
         </header>
 
-        <!-- Search Section -->
-        <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
-            <div class="search-wrapper w-full md:w-2/3 lg:w-1/2">
-                <input
-                    id="search-input"
-                    type="text"
-                    placeholder="Search for a song, artist, or album..."
-                    class="w-full px-5 py-3 rounded-full text-gray-900 bg-gray-200 border-2 border-transparent focus:outline-none focus:border-purple-500 transition-colors duration-300 shadow-md"
-                    autocomplete="off"
+        <!-- Search Section (Collapsible) -->
+        <div id="search-section" class="hidden transition-all duration-300 transform origin-top scale-y-0 opacity-0">
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8 py-4 border-t border-b border-gray-700">
+                <div class="search-wrapper w-full md:w-2/3 lg:w-1/2">
+                    <input
+                        id="search-input"
+                        type="text"
+                        placeholder="Search for a song, artist, or album..."
+                        class="w-full px-5 py-3 rounded-full text-gray-900 bg-gray-200 border-2 border-transparent focus:outline-none focus:border-purple-500 transition-colors duration-300 shadow-md"
+                        autocomplete="off"
+                    >
+                    <div id="suggestion-container" class="suggestion-container"></div>
+                </div>
+                <button
+                    id="search-button"
+                    class="w-full md:w-1/4 lg:w-1/6 px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-transform duration-200 transform hover:scale-105"
                 >
-                <div id="suggestion-container" class="suggestion-container"></div>
+                    Search
+                </button>
             </div>
-            <button
-                id="search-button"
-                class="w-full md:w-1/4 lg:w-1/6 px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold shadow-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-transform duration-200 transform hover:scale-105"
-            >
-                Search
-            </button>
         </div>
 
-        <!-- Advanced Search Filters -->
-        <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8">
+        <!-- Advanced Search Filters (part of collapsible search section) -->
+        <div id="advanced-filters" class="flex flex-col md:flex-row items-center justify-center gap-4 mb-8 hidden">
             <input id="artist-filter" type="text" placeholder="Filter by Artist..." class="w-full md:w-1/3 px-4 py-2 rounded-full text-gray-900 bg-gray-200 border-2 border-transparent focus:outline-none focus:border-purple-500 transition-colors">
             <input id="year-filter" type="text" placeholder="Filter by Year..." class="w-full md:w-1/3 px-4 py-2 rounded-full text-gray-900 bg-gray-200 border-2 border-transparent focus:outline-none focus:border-purple-500 transition-colors">
             <select id="language-filter" class="w-full md:w-1/3 px-4 py-2 rounded-full text-gray-900 bg-gray-200 border-2 border-transparent focus:outline-none focus:border-purple-500 transition-colors">
@@ -259,932 +117,103 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Get references to DOM elements
-            const searchInput = document.getElementById('search-input');
-            const searchButton = document.getElementById('search-button');
-            const resultsContainer = document.getElementById('results-container');
-            const messageBox = document.getElementById('message-box');
-            const artistFilterInput = document.getElementById('artist-filter');
-            const yearFilterInput = document.getElementById('year-filter');
-            const languageFilterInput = document.getElementById('language-filter');
-            const suggestionContainer = document.getElementById('suggestion-container');
-
-            // API base URLs
-            // Primary API URL - This is the documented API endpoint
-            const PRIMARY_API_URL = 'https://jiosaavn-api.kishoresaravanan440.workers.dev';
-            // Fallback API URLs (in case the primary is down)
-            const FALLBACK_API_URL = 'https://saavn.me';
-            const THIRD_API_URL = 'https://api.saavn.dev';
-            // Current API URL to use
-            let API_BASE_URL = PRIMARY_API_URL;
-            // Number of songs to request from the API
-            const SONGS_LIMIT = 100;
-
-            // References to message box elements
-            const loadingSpinner = document.getElementById('loading-spinner');
-            const messageText = document.getElementById('message-text');
-
-            // Function to show a message to the user
-            const showMessage = (text, type = 'info', isLoading = false) => {
-                messageText.textContent = text;
-                messageBox.className = `mb-6 p-4 rounded-lg text-center font-medium transition-opacity duration-300 ${type === 'error' ? 'bg-red-900 text-red-200' : 'bg-blue-900 text-blue-200'} block opacity-100`;
-                
-                // Show or hide the loading spinner
-                if (isLoading) {
-                    loadingSpinner.classList.remove('hidden');
-                } else {
-                    loadingSpinner.classList.add('hidden');
-                }
-            };
-
-            // Function to clear the message box
-            const hideMessage = () => {
-                messageBox.classList.add('hidden');
-                messageBox.classList.remove('block');
-                loadingSpinner.classList.add('hidden');
-            };
-
-            // Function to fetch and display song results
-            const fetchSongs = async (query) => {
-                // Clear previous results and show loading message
-                resultsContainer.innerHTML = '';
-                if (!query) {
-                    showMessage('Please enter a song name to search.', 'error');
-                    return;
-                }
-                
-                // Get filter values
-                const artistFilter = artistFilterInput.value.trim();
-                const yearFilter = yearFilterInput.value.trim();
-                const languageFilter = languageFilterInput.value;
-                
-                // Include filters in the search query if they are set
-                let enhancedQuery = query;
-                if (artistFilter) enhancedQuery += ` ${artistFilter}`;
-                if (yearFilter) enhancedQuery += ` ${yearFilter}`;
-                if (languageFilter && languageFilter !== "") enhancedQuery += ` ${languageFilter}`;
-                
-                console.log('Enhanced search query:', enhancedQuery);
-                showMessage(`Searching for up to ${SONGS_LIMIT} songs with filters...`, 'info', true);
-
-                try {                    
-                    // Construct the search URL with the query using the correct endpoint
-                    // Different APIs have different endpoint structures
-                    // Set limit to fetch the specified number of songs from all APIs
-                    let url;
-                    if (API_BASE_URL === PRIMARY_API_URL) {
-                        url = `${API_BASE_URL}/api/search/songs?query=${encodeURIComponent(enhancedQuery)}&limit=${SONGS_LIMIT}`;
-                    } else if (API_BASE_URL === FALLBACK_API_URL) {
-                        url = `${API_BASE_URL}/api/search/songs?query=${encodeURIComponent(enhancedQuery)}&page=1&limit=${SONGS_LIMIT}`;
-                    } else {
-                        url = `${API_BASE_URL}/search/songs?query=${encodeURIComponent(enhancedQuery)}&limit=${SONGS_LIMIT}`;
-                    }
-                    
-                    console.log('Fetching from URL:', url);
-                    
-                    const response = await fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    // Check if the response is successful
-                    if (!response.ok) {
-                        console.error('API Error Status:', response.status);
-                        throw new Error(`API error: ${response.status} ${response.statusText}`);
-                    }
-
-                    const data = await response.json();
-                    
-                    // Handle different API response structures
-                    let songs = [];
-                    if (API_BASE_URL === PRIMARY_API_URL) {
-                        // Primary API structure (jiosaavn-api.kishoresaravanan440.workers.dev)
-                        if (data.data && Array.isArray(data.data)) {
-                            songs = data.data;
-                        } else if (data.data && data.data.results && Array.isArray(data.data.results)) {
-                            songs = data.data.results;
-                        } else if (data.results && Array.isArray(data.results)) {
-                            songs = data.results;
-                        } else {
-                            songs = data.data || [];
-                        }
-                        console.log('Found songs from primary API:', songs.length, songs);
-                    } else if (API_BASE_URL === FALLBACK_API_URL) {
-                        // Fallback API structure (saavn.me)
-                        songs = data.data?.results || data.results || [];
-                        console.log('Found songs from fallback API:', songs.length, songs);
-                    } else {
-                        // Third API structure
-                        songs = data.data || data.results || [];
-                        console.log('Found songs from third API:', songs.length, songs);
-                    }
-                    
-                    // Log raw response for debugging
-                    console.log('Raw API response:', data);
-                    
-                    // Apply additional client-side filtering for more precise results
-                    // Note: We're already including these in the API query, but we'll filter again
-                    // for more precise matching (e.g., exact year match)
-
-                    // Ensure songs is always an array
-                    if (!Array.isArray(songs)) {
-                        console.error('Songs is not an array:', songs);
-                        songs = [];
-                    }
-
-                    const filteredSongs = songs.filter(song => {
-                        if (!song) return false; // Skip null or undefined items
-                        
-                        // Handle different API response structures for artist name
-                        let artistName = '';
-                        if (song.primaryArtists) {
-                            artistName = song.primaryArtists;
-                        } else if (song.artists && song.artists.primary) {
-                            artistName = song.artists.primary.map(a => a.name).join(', ');
-                        } else if (song.artist) {
-                            artistName = typeof song.artist === 'string' ? song.artist : JSON.stringify(song.artist);
-                        }
-                        
-                        const songYear = song.year || '';
-                        const songLanguage = song.language || '';
-
-                        const artistMatch = !artistFilter || (artistName && artistName.toLowerCase().includes(artistFilter.toLowerCase()));
-                        const yearMatch = !yearFilter || (songYear && songYear.toString() === yearFilter);
-                        const languageMatch = !languageFilter || (languageFilter === "" || (songLanguage && songLanguage.toLowerCase() === languageFilter.toLowerCase()));
-
-                        return artistMatch && yearMatch && languageMatch;
-                    });
-
-                    // Check if there are songs in the data
-                    if (filteredSongs.length > 0) {
-                        hideMessage();
-                        console.log('Displaying', filteredSongs.length, 'out of', songs.length, 'songs after filtering');
-                        showMessage(`Found ${songs.length} songs, showing ${filteredSongs.length} after filtering.`, 'info');
-                        setTimeout(hideMessage, 3000); // Hide message after 3 seconds
-                        // Loop through the songs and create a card for each (show all related songs)
-                        filteredSongs.forEach((song, idx) => {
-                            // Extract song details based on API structure
-                            let songName, artistName, albumName, image, downloadUrl;
-                            
-                            if (API_BASE_URL === PRIMARY_API_URL) {
-                                songName = song.name || 'Unknown';
-                                if (song.artists && song.artists.primary) {
-                                    artistName = song.artists.primary.map(artist => artist.name).join(', ');
-                                } else {
-                                    artistName = song.primaryArtists || 'Unknown Artist';
-                                }
-                                albumName = song.album?.name || 'Unknown Album';
-                                if (song.image && song.image.length > 0) {
-                                    const img500 = song.image.find(img => img.quality === '500x500');
-                                    image = img500?.url || song.image[song.image.length - 1].url;
-                                } else {
-                                    image = 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
-                                }
-                                if (song.downloadUrl && Array.isArray(song.downloadUrl) && song.downloadUrl.length > 0) {
-                                    // Look for the highest quality download URL available
-                                    // First try 320kbps, then 160kbps, then the highest available
-                                    const qualityPriority = ['320kbps', '160kbps', '96kbps', '48kbps', '12kbps'];
-                                    let selectedDownload = null;
-                                    
-                                    // Try to find the best quality available according to our priority list
-                                    for (const quality of qualityPriority) {
-                                        const found = song.downloadUrl.find(dl => dl && dl.quality === quality);
-                                        if (found && found.url) {
-                                            selectedDownload = found;
-                                            break;
-                                        }
-                                    }
-                                    
-                                    // If no match found by quality name, sort by quality if it's a number value
-                                    if (!selectedDownload) {
-                                        const sortedByQuality = [...song.downloadUrl]
-                                            .filter(dl => dl && dl.url)
-                                            .sort((a, b) => {
-                                                const qualityA = parseInt(a.quality);
-                                                const qualityB = parseInt(b.quality);
-                                                return isNaN(qualityA) || isNaN(qualityB) ? 0 : qualityB - qualityA;
-                                            });
-                                        
-                                        if (sortedByQuality.length > 0) {
-                                            selectedDownload = sortedByQuality[0];
-                                        }
-                                    }
-                                    
-                                    // If still no match, use the last one as a fallback
-                                    if (selectedDownload && selectedDownload.url) {
-                                        downloadUrl = selectedDownload.url;
-                                        console.log(`Selected download quality: ${selectedDownload.quality}`);
-                                    } else if (song.downloadUrl[song.downloadUrl.length - 1] && song.downloadUrl[song.downloadUrl.length - 1].url) {
-                                        downloadUrl = song.downloadUrl[song.downloadUrl.length - 1].url;
-                                        console.log(`Fallback to last download option`);
-                                    } else {
-                                        downloadUrl = null;
-                                    }
-                                } else {
-                                    downloadUrl = null;
-                                }
-                            } else if (API_BASE_URL === FALLBACK_API_URL) {
-                                songName = song.name || song.title || 'Unknown';
-                                artistName = song.primaryArtists || 'Unknown Artist';
-                                albumName = song.album?.name || 'Unknown Album';
-                                image = song.image?.[2]?.link || song.image || 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
-                                
-                                // Get highest quality download URL - for FALLBACK API
-                                if (song.downloadUrl && Array.isArray(song.downloadUrl)) {
-                                    // Try high quality options first (4 is usually 320kbps)
-                                    downloadUrl = song.downloadUrl[4]?.link || song.downloadUrl[3]?.link || 
-                                                song.downloadUrl[2]?.link || song.downloadUrl[1]?.link || 
-                                                song.downloadUrl[0]?.link || song.url;
-                                    console.log('Selected fallback API download quality:', 
-                                        song.downloadUrl.findIndex(dl => dl?.link === downloadUrl) !== -1 ? 
-                                        `Option ${song.downloadUrl.findIndex(dl => dl?.link === downloadUrl) + 1} of ${song.downloadUrl.length}` : 'URL fallback');
-                                } else {
-                                    downloadUrl = song.url;
-                                }
-                            } else {
-                                songName = song.name || song.title || 'Unknown';
-                                artistName = song.artists?.primary?.map(artist => artist.name).join(', ') || song.primaryArtists || 'Unknown Artist';
-                                albumName = song.album?.name || 'Unknown Album';
-                                image = song.image?.[2]?.url || song.image || 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
-                                
-                                // Get highest quality download URL - for THIRD API
-                                if (song.downloadUrl && Array.isArray(song.downloadUrl) && song.downloadUrl.length > 0) {
-                                    // Sort download URLs if they have a quality property that can be parsed as a number
-                                    const sortedDownloads = [...song.downloadUrl]
-                                        .filter(dl => dl && dl.url)
-                                        .sort((a, b) => {
-                                            // Try to extract bitrate numbers if available
-                                            const qualityA = a.quality ? parseInt(a.quality.replace(/[^0-9]/g, '')) : 0;
-                                            const qualityB = b.quality ? parseInt(b.quality.replace(/[^0-9]/g, '')) : 0;
-                                            // Higher number means better quality
-                                            return qualityB - qualityA;
-                                        });
-                                    
-                                    if (sortedDownloads.length > 0) {
-                                        downloadUrl = sortedDownloads[0].url;
-                                        console.log('Selected third API download quality:', sortedDownloads[0].quality || 'Highest available');
-                                    } else {
-                                        downloadUrl = song.url;
-                                    }
-                                } else {
-                                    downloadUrl = song.url;
-                                }
-                            }
-                            const fallbackImage = 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
-                            const duration = song.duration ? `${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}` : '--:--';
-                            const language = song.language ? song.language.charAt(0).toUpperCase() + song.language.slice(1) : '';
-                            const year = song.year || '';
-                            // Get quality info for the selected download URL
-                            let quality = '';
-                            if (song.downloadUrl && Array.isArray(song.downloadUrl) && song.downloadUrl.length > 0) {
-                                const selectedDownload = song.downloadUrl.find(dl => dl && dl.url === downloadUrl);
-                                if (selectedDownload && selectedDownload.quality) {
-                                    quality = selectedDownload.quality;
-                                } else {
-                                    // If we can't find the exact download URL match, use the highest quality label
-                                    const sortedByQuality = [...song.downloadUrl]
-                                        .filter(dl => dl && dl.quality)
-                                        .sort((a, b) => {
-                                            const qualityA = parseInt(a.quality);
-                                            const qualityB = parseInt(b.quality);
-                                            return isNaN(qualityA) || isNaN(qualityB) ? 0 : qualityB - qualityA;
-                                        });
-                                    quality = sortedByQuality.length > 0 ? sortedByQuality[0].quality : '320kbps';
-                                }
-                            }
-                            const songCard = document.createElement('div');
-                            songCard.className = 'bg-gray-700 rounded-xl shadow-lg overflow-hidden flex flex-col transition-transform duration-200 hover:scale-105';
-                            songCard.innerHTML = `
-                                <img src="${image}" alt="${songName}" class="w-full h-48 object-cover" onerror="this.src='${fallbackImage}'">
-                                <div class="p-4 flex flex-col flex-grow">
-                                    <h3 class="text-xl font-bold mb-1 truncate">${songName}</h3>
-                                    <p class="text-sm text-gray-300 truncate">Artist: ${artistName}</p>
-                                    <p class="text-sm text-gray-400 truncate">Album: ${albumName}</p>
-                                    <div class="flex flex-wrap text-xs text-gray-400 gap-2 mt-1 mb-4">
-                                        ${duration ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${duration}</span>` : ''}
-                                        ${language ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${language}</span>` : ''}
-                                        ${year ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${year}</span>` : ''}
-                                        ${quality ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${quality}</span>` : ''}
-                                    </div>
-                                    <div class="flex flex-col gap-2">
-                                        <button class="view-details-btn w-full px-4 py-2 bg-blue-600 text-white font-bold text-center rounded-full hover:bg-blue-700 transition-colors duration-200">
-                                            View Details
-                                        </button>
-                                        ${downloadUrl ? 
-                                          `<a href="${downloadUrl}" download="${songName}.mp3" class="w-full px-4 py-2 bg-purple-600 text-white font-bold text-center rounded-full hover:bg-purple-700 transition-colors duration-200">
-                                              Download HQ${quality ? ` (${quality})` : ''}
-                                          </a>` : 
-                                          `<span class="w-full px-4 py-2 bg-gray-500 text-white font-bold text-center rounded-full cursor-not-allowed">
-                                              Download Unavailable
-                                          </span>`}
-                                    </div>
-                                </div>
-                            `;
-                            // Add event listener to view details button
-                            const viewDetailsBtn = songCard.querySelector('.view-details-btn');
-                            viewDetailsBtn.addEventListener('click', () => {
-                                const songData = {
-                                    name: songName,
-                                    artist: artistName,
-                                    album: albumName,
-                                    image: image,
-                                    downloadUrl: downloadUrl,
-                                    quality: quality,
-                                    year: year,
-                                    language: language
-                                };
-                                showSongDetails(songData);
-                            });
-                            
-                            resultsContainer.appendChild(songCard);
-                        });
-                    } else {
-                        showMessage('No songs found for your search query and filters. Please try again.', 'error');
-                    }
-                } catch (error) {
-                    console.error('Failed to fetch songs:', error);
-                    
-                    // If using the primary API and it failed, try the fallback API
-                    if (API_BASE_URL === PRIMARY_API_URL) {
-                        API_BASE_URL = FALLBACK_API_URL;
-                        showMessage('Primary API failed. Trying fallback API...', 'info');
-                        console.log('Switching to fallback API:', FALLBACK_API_URL);
-                        // Try again with the fallback API
-                        setTimeout(() => fetchSongs(query), 1000);
-                        return;
-                    }
-                    // If using the fallback API and it failed, try the third API
-                    else if (API_BASE_URL === FALLBACK_API_URL) {
-                        API_BASE_URL = THIRD_API_URL;
-                        showMessage('Fallback API failed. Trying another API source...', 'info');
-                        console.log('Switching to third API:', THIRD_API_URL);
-                        // Try again with the third API
-                        setTimeout(() => fetchSongs(query), 1000);
-                        return;
-                    }
-                    
-                    // Reset to primary API for next search attempt
-                    API_BASE_URL = PRIMARY_API_URL;
-                    
-                    // If we've tried all APIs and all failed
-                    showMessage(`Error: All API endpoints failed. Please check your connection or try a different search term. Error: ${error.message}`, 'error');
-                    console.error('Full error details:', error);
-                }
-            };
-
-            // Gemini API configuration
-            const GEMINI_API_KEY = 'AIzaSyBzeBqXflk2kR3c2x86xPK6awkxQhwsJqA';
-            const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-            const GEMINI_DETAIL_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro:generateContent';
-            let typingTimer;
-            const TYPING_DELAY = 150; // reduced from 500ms for faster suggestions
+    <!-- Audio Player -->
+    <div id="audio-player" class="audio-player">
+        <div class="player-container">
+            <img id="player-song-image" class="player-song-image" src="https://placehold.co/500x500/1e293b/d1d5db?text=No+Song" alt="Song Cover">
             
-            // Suggestion cache to speed up repeat searches
-            const suggestionCache = new Map();
-            const songDetailsCache = new Map();
-            const CACHE_EXPIRY = 60 * 60 * 1000; // Cache entries expire after 1 hour
+            <div class="player-song-info">
+                <div id="player-song-title" class="player-song-title">No song selected</div>
+                <div id="player-song-artist" class="player-song-artist">Select a song to play</div>
+            </div>
             
-            // Function to get search suggestions from Gemini API
-            const getSuggestions = async (query) => {
-                if (!query || query.length < 2) {
-                    suggestionContainer.style.display = 'none';
-                    return;
-                }
-                
-                // Check cache first
-                const cacheKey = query.toLowerCase();
-                if (suggestionCache.has(cacheKey)) {
-                    const { suggestions, timestamp } = suggestionCache.get(cacheKey);
-                    // Use cache if it's not expired
-                    if (Date.now() - timestamp < CACHE_EXPIRY) {
-                        console.log('Using cached suggestions for:', query);
-                        displaySuggestions(suggestions, query);
-                        return;
-                    } else {
-                        // Remove expired cache entry
-                        suggestionCache.delete(cacheKey);
-                    }
-                }
-                
-                // Show loading indicator for new searches
-                suggestionContainer.innerHTML = '<div class="p-2 text-center text-gray-400">Loading suggestions...</div>';
-                suggestionContainer.style.display = 'block';
-                
-                try {
-                    const prompt = `
-                    User is searching for music with query: "${query}"
-                    
-                    Generate 5 search suggestions for music (songs, albums, or artists) that the user might be looking for.
-                    The suggestions should be related to popular music that matches the query.
-                    
-                    Format your response as a JSON array of strings only, with no explanations.
-                    Example: ["Suggestion 1", "Suggestion 2", "Suggestion 3", "Suggestion 4", "Suggestion 5"]
-                    `;
-                    
-                    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            contents: [
-                                {
-                                    parts: [
-                                        {
-                                            text: prompt
-                                        }
-                                    ]
-                                }
-                            ],
-                            generationConfig: {
-                                temperature: 0.1,  // Lower temperature for more predictable results
-                                maxOutputTokens: 100,  // Reduced for faster response
-                                topK: 10,  // Limit token selection for faster generation
-                                topP: 0.8  // Narrow probability distribution
-                            },
-                            safetySettings: [
-                                {
-                                    category: "HARM_CATEGORY_HARASSMENT",
-                                    threshold: "BLOCK_NONE"
-                                }
-                            ]
-                        })
-                    });
-                    
-                    if (!response.ok) {
-                        console.error('Gemini API error:', response.status);
-                        return;
-                    }
-                    
-                    const data = await response.json();
-                    
-                    // Extract the suggestions from the response
-                    const textResponse = data.candidates[0].content.parts[0].text;
-                    
-                    // Parse JSON from text response
-                    let suggestions;
-                    try {
-                        suggestions = JSON.parse(textResponse);
-                    } catch (e) {
-                        // If parsing fails, try to extract array manually
-                        const match = textResponse.match(/\[(.*?)\]/s);
-                        if (match) {
-                            try {
-                                suggestions = JSON.parse(`[${match[1]}]`);
-                            } catch (e2) {
-                                console.error('Could not parse suggestions:', e2);
-                                suggestions = [];
-                            }
-                        } else {
-                            suggestions = [];
-                        }
-                    }
-                    
-                    if (Array.isArray(suggestions) && suggestions.length > 0) {
-                        // Save to cache
-                        suggestionCache.set(query.toLowerCase(), {
-                            suggestions,
-                            timestamp: Date.now()
-                        });
-                        
-                        // Limit cache size to avoid memory issues
-                        if (suggestionCache.size > 100) {
-                            // Delete oldest entry
-                            const oldestKey = suggestionCache.keys().next().value;
-                            suggestionCache.delete(oldestKey);
-                        }
-                        
-                        displaySuggestions(suggestions, query);
-                    } else {
-                        suggestionContainer.style.display = 'none';
-                    }
-                } catch (error) {
-                    console.error('Error fetching suggestions:', error);
-                    suggestionContainer.style.display = 'none';
-                    
-                    // Show default suggestions on error
-                    const defaultSuggestions = [
-                        `${query} songs`, 
-                        `${query} album`,
-                        `${query} artist`, 
-                        `Best of ${query}`,
-                        `Popular ${query} tracks`
-                    ];
-                    displaySuggestions(defaultSuggestions, query);
-                }
-            };
+            <div class="player-time" id="current-time">0:00</div>
             
-            // Function to display suggestions
-            const displaySuggestions = (suggestions, query) => {
-                suggestionContainer.innerHTML = '';
-                
-                suggestions.forEach(suggestion => {
-                    const item = document.createElement('div');
-                    item.className = 'suggestion-item';
-                    
-                    // Highlight the matching part
-                    const lowercaseQuery = query.toLowerCase();
-                    const lowercaseSuggestion = suggestion.toLowerCase();
-                    const index = lowercaseSuggestion.indexOf(lowercaseQuery);
-                    
-                    if (index !== -1) {
-                        const before = suggestion.substring(0, index);
-                        const match = suggestion.substring(index, index + query.length);
-                        const after = suggestion.substring(index + query.length);
-                        item.innerHTML = `${before}<span class="suggestion-highlight">${match}</span>${after}`;
-                    } else {
-                        item.textContent = suggestion;
-                    }
-                    
-                    // Add enhanced click handler with visual feedback
-                    item.addEventListener('click', (e) => {
-                        // Add visual feedback
-                        item.classList.add('selected');
-                        
-                        // Set input value to suggestion
-                        searchInput.value = suggestion;
-                        
-                        // Hide the suggestion container
-                        suggestionContainer.style.display = 'none';
-                        
-                        // Trigger search with a small delay for better UX
-                        setTimeout(() => {
-                            fetchSongs(suggestion);
-                        }, 100);
-                        
-                        // Focus the input after selection
-                        searchInput.focus();
-                    });
-                    
-                    // Also trigger on mouse down for faster response
-                    item.addEventListener('mousedown', (e) => {
-                        // Prevent default to avoid losing focus on the input
-                        e.preventDefault();
-                    });
-                    
-                    // Add touch support for mobile devices
-                    item.addEventListener('touchstart', (e) => {
-                        // Add visual active state for touch
-                        item.classList.add('selected');
-                    });
-                    
-                    suggestionContainer.appendChild(item);
-                });
-                
-                suggestionContainer.style.display = 'block';
-            };
+            <div class="progress-container" id="progress-container">
+                <div class="progress-bar" id="progress-bar">
+                    <div class="progress-ball"></div>
+                </div>
+            </div>
             
-            // Handle input changes for suggestions
-            let lastQuery = '';
-            searchInput.addEventListener('input', (e) => {
-                clearTimeout(typingTimer);
-                const query = e.target.value.trim();
-                
-                if (query.length < 2) {
-                    suggestionContainer.style.display = 'none';
-                    return;
-                }
-                
-                // Prevent duplicate API calls for the same query
-                if (query === lastQuery) {
-                    return;
-                }
-                
-                // Check for prefix match in cache for instant suggestions
-                const prefixMatch = Array.from(suggestionCache.keys()).find(key => 
-                    query.toLowerCase().startsWith(key) && key.length > 2);
-                
-                if (prefixMatch) {
-                    const { suggestions } = suggestionCache.get(prefixMatch);
-                    // Filter cached suggestions to match current query
-                    const filteredSuggestions = suggestions.filter(suggestion => 
-                        suggestion.toLowerCase().includes(query.toLowerCase()));
-                    
-                    if (filteredSuggestions.length > 0) {
-                        console.log('Using prefix-matched suggestions');
-                        displaySuggestions(filteredSuggestions, query);
-                        
-                        // Still fetch new suggestions but with lower priority
-                        setTimeout(() => {
-                            if (searchInput.value.trim() === query) {
-                                getSuggestions(query);
-                            }
-                        }, 1000);
-                        
-                        return;
-                    }
-                }
-                
-                lastQuery = query;
-                
-                // Wait until typing stops before making API call
-                typingTimer = setTimeout(() => {
-                    getSuggestions(query);
-                }, TYPING_DELAY);
-            });
+            <div class="player-time" id="total-time">0:00</div>
             
-            // Hide suggestions when clicking outside
-            document.addEventListener('click', (e) => {
-                if (e.target !== searchInput && !suggestionContainer.contains(e.target)) {
-                    suggestionContainer.style.display = 'none';
-                }
-            });
+            <div class="player-controls">
+                <button class="player-btn" id="prev-btn" title="Previous">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M4 4a.5.5 0 0 1 1 0v3.248l6.267-3.636c.54-.313 1.232.066 1.232.696v7.384c0 .63-.692 1.01-1.232.697L5 8.753V12a.5.5 0 0 1-1 0V4z"/>
+                    </svg>
+                </button>
+                <button class="player-btn play-pause" id="play-pause-btn" title="Play/Pause">
+                    <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" class="">
+                        <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                    </svg>
+                    <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" class="hidden">
+                        <path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/>
+                    </svg>
+                </button>
+                <button class="player-btn" id="next-btn" title="Next">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M12.5 4a.5.5 0 0 0-1 0v3.248L5.233 3.612C4.693 3.3 4 3.678 4 4.308v7.384c0 .63.692 1.01 1.233.697L11.5 8.753V12a.5.5 0 0 0 1 0V4z"/>
+                    </svg>
+                </button>
+            </div>
             
-            // Handle keyboard navigation for suggestions
-            searchInput.addEventListener('keydown', (e) => {
-                const items = suggestionContainer.querySelectorAll('.suggestion-item');
-                if (!items.length) return;
-                
-                const activeItem = suggestionContainer.querySelector('.suggestion-item.selected');
-                let index = Array.from(items).indexOf(activeItem);
-                
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (suggestionContainer.style.display === 'none') {
-                        suggestionContainer.style.display = 'block';
-                        return;
-                    }
-                    
-                    if (index < 0) {
-                        index = 0;
-                    } else {
-                        items[index].classList.remove('selected');
-                        index = (index + 1) % items.length;
-                    }
-                    items[index].classList.add('selected');
-                    items[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (suggestionContainer.style.display === 'none') return;
-                    
-                    if (index < 0) {
-                        index = items.length - 1;
-                    } else {
-                        items[index].classList.remove('selected');
-                        index = (index - 1 + items.length) % items.length;
-                    }
-                    items[index].classList.add('selected');
-                    items[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                } else if (e.key === 'Enter' && activeItem) {
-                    e.preventDefault();
-                    searchInput.value = activeItem.textContent.trim();
-                    suggestionContainer.style.display = 'none';
-                    fetchSongs(searchInput.value);
-                } else if (e.key === 'Escape') {
-                    suggestionContainer.style.display = 'none';
-                }
-            });
+            <div class="volume-container">
+                <button class="player-btn" id="volume-btn" title="Mute/Unmute">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" id="volume-high-icon">
+                        <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/>
+                        <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/>
+                        <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.49 3.49 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="hidden" id="volume-mute-icon">
+                        <path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zm7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 0 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                </button>
+                <div class="volume-slider" id="volume-slider">
+                    <div class="volume-progress" id="volume-progress"></div>
+                </div>
+            </div>
             
-            // Event listeners for search
-            searchButton.addEventListener('click', () => {
-                const query = searchInput.value.trim();
-                fetchSongs(query);
-            });
-
-            searchInput.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter' && !event.isComposing) {
-                    const query = searchInput.value.trim();
-                    suggestionContainer.style.display = 'none';
-                    fetchSongs(query);
-                }
-            });
-            
-            // Modal elements
-            const songDetailModal = document.getElementById('song-detail-modal');
-            const modalClose = document.getElementById('modal-close');
-            const modalSongTitle = document.getElementById('modal-song-title');
-            const modalSongArtist = document.getElementById('modal-song-artist');
-            const modalSongAlbum = document.getElementById('modal-song-album');
-            const modalSongImage = document.getElementById('modal-song-image');
-            const modalDownloadButton = document.getElementById('modal-download-button');
-            const songDetailLoading = document.getElementById('song-detail-loading');
-            const songDetailInfo = document.getElementById('song-detail-info');
-            
-            // Close modal when clicking the close button or outside the modal
-            modalClose.addEventListener('click', () => {
-                songDetailModal.classList.remove('active');
-            });
-            
-            songDetailModal.addEventListener('click', (e) => {
-                if (e.target === songDetailModal) {
-                    songDetailModal.classList.remove('active');
-                }
-            });
-            
-            // Function to get song details from Gemini
-            const getSongDetails = async (songInfo) => {
-                const cacheKey = `${songInfo.name}-${songInfo.artist}`;
-                
-                // Check cache first
-                if (songDetailsCache.has(cacheKey)) {
-                    const { details, timestamp } = songDetailsCache.get(cacheKey);
-                    if (Date.now() - timestamp < CACHE_EXPIRY) {
-                        console.log('Using cached song details');
-                        return details;
-                    } else {
-                        songDetailsCache.delete(cacheKey);
-                    }
-                }
-                
-                try {
-                    const prompt = `
-                    I need detailed information about this song:
-                    Song Name: "${songInfo.name}"
-                    Artist: "${songInfo.artist}"
-                    Album: "${songInfo.album || 'Unknown'}"
-                    
-                    Please provide the following information in JSON format:
-                    1. A brief background about the song (when it was released, significance, etc.)
-                    2. Information about the artist
-                    3. Genre and musical style
-                    4. Notable lyrics or themes (if it's a significant song)
-                    5. Reception and popularity
-                    6. Related songs that fans might enjoy
-                    
-                    Format your response as a valid JSON object with these keys:
-                    {
-                      "background": "...",
-                      "artistInfo": "...",
-                      "genre": "...",
-                      "themes": "...",
-                      "reception": "...",
-                      "relatedSongs": ["Song 1", "Song 2", "Song 3"],
-                      "tags": ["tag1", "tag2", "tag3"]
-                    }
-                    
-                    Respond ONLY with the JSON. No other text.
-                    `;
-                    
-                    const response = await fetch(`${GEMINI_DETAIL_URL}?key=${GEMINI_API_KEY}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            contents: [
-                                {
-                                    parts: [
-                                        {
-                                            text: prompt
-                                        }
-                                    ]
-                                }
-                            ],
-                            generationConfig: {
-                                temperature: 0.2,
-                                maxOutputTokens: 1024
-                            }
-                        })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`Gemini API error: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    const textResponse = data.candidates[0].content.parts[0].text;
-                    
-                    // Parse the JSON response
-                    let details;
-                    try {
-                        // Try to extract JSON from the response
-                        const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
-                        if (jsonMatch) {
-                            details = JSON.parse(jsonMatch[0]);
-                        } else {
-                            throw new Error('No JSON found in response');
-                        }
-                    } catch (e) {
-                        console.error('Failed to parse song details JSON:', e);
-                        details = {
-                            background: "Information not available at this moment.",
-                            artistInfo: "Details about the artist could not be retrieved.",
-                            genre: "Unknown",
-                            themes: "Not available",
-                            reception: "Information not available",
-                            relatedSongs: [],
-                            tags: ["music"]
-                        };
-                    }
-                    
-                    // Save to cache
-                    songDetailsCache.set(cacheKey, {
-                        details,
-                        timestamp: Date.now()
-                    });
-                    
-                    return details;
-                } catch (error) {
-                    console.error('Error fetching song details:', error);
-                    return {
-                        background: "Information not available at this moment.",
-                        artistInfo: "Details about the artist could not be retrieved.",
-                        genre: "Unknown",
-                        themes: "Not available",
-                        reception: "Information not available",
-                        relatedSongs: [],
-                        tags: ["music"]
-                    };
-                }
-            };
-            
-            // Function to show song details in modal
-            const showSongDetails = async (song) => {
-                // Display song basic info
-                modalSongTitle.textContent = song.name;
-                modalSongArtist.textContent = song.artist;
-                modalSongAlbum.textContent = song.album || '';
-                modalSongImage.src = song.image;
-                modalSongImage.onerror = () => {
-                    modalSongImage.src = 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
-                };
-                
-                // Set download button
-                if (song.downloadUrl) {
-                    modalDownloadButton.href = song.downloadUrl;
-                    modalDownloadButton.download = `${song.name}.mp3`;
-                    modalDownloadButton.classList.remove('bg-gray-500', 'cursor-not-allowed');
-                    modalDownloadButton.classList.add('bg-purple-600', 'hover:bg-purple-700');
-                    modalDownloadButton.textContent = `Download ${song.quality ? `(${song.quality})` : ''}`;
-                } else {
-                    modalDownloadButton.removeAttribute('href');
-                    modalDownloadButton.classList.remove('bg-purple-600', 'hover:bg-purple-700');
-                    modalDownloadButton.classList.add('bg-gray-500', 'cursor-not-allowed');
-                    modalDownloadButton.textContent = 'Download Unavailable';
-                }
-                
-                // Show loading state
-                songDetailLoading.classList.remove('hidden');
-                songDetailInfo.classList.add('hidden');
-                songDetailInfo.innerHTML = '';
-                
-                // Show modal
-                songDetailModal.classList.add('active');
-                
-                // Fetch song details from Gemini
-                const details = await getSongDetails(song);
-                
-                // Hide loading state
-                songDetailLoading.classList.add('hidden');
-                songDetailInfo.classList.remove('hidden');
-                
-                // Populate details
-                const detailHTML = `
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">About this Song</h3>
-                        <p class="text-gray-300">${details.background}</p>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Artist</h3>
-                        <p class="text-gray-300">${details.artistInfo}</p>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Genre & Style</h3>
-                        <p class="text-gray-300">${details.genre}</p>
-                    </div>
-                    
-                    ${details.themes ? `
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Themes & Lyrics</h3>
-                        <p class="text-gray-300">${details.themes}</p>
-                    </div>
-                    ` : ''}
-                    
-                    ${details.reception ? `
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Reception</h3>
-                        <p class="text-gray-300">${details.reception}</p>
-                    </div>
-                    ` : ''}
-                    
-                    ${details.relatedSongs && details.relatedSongs.length > 0 ? `
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">You Might Also Like</h3>
-                        <ul class="list-disc list-inside text-gray-300 ml-2">
-                            ${details.relatedSongs.map(song => `<li>${song}</li>`).join('')}
-                        </ul>
-                    </div>
-                    ` : ''}
-                    
-                    ${details.tags && details.tags.length > 0 ? `
-                    <div class="mt-4">
-                        <div class="flex flex-wrap gap-1">
-                            ${details.tags.map(tag => `<span class="song-detail-tag">${tag}</span>`).join('')}
+            <div class="playlist-icon" style="position: relative;">
+                <button class="player-btn" id="playlist-btn" title="Playlist">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                    <div class="playlist-badge" id="playlist-count">0</div>
+                </button>
+                <div class="playlist-dropdown" id="playlist-dropdown">
+                    <div class="flex justify-between items-center p-2 bg-gray-700">
+                        <div class="flex items-center">
+                            <select id="playlist-select" class="text-sm bg-gray-800 text-white py-1 px-2 rounded mr-2 border border-gray-600 focus:outline-none focus:border-purple-500">
+                                <option value="default">My Playlist</option>
+                            </select>
+                            <button id="new-playlist-btn" class="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div>
+                            <button id="save-playlist-btn" class="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors mr-1">Save</button>
+                            <button id="clear-playlist-btn" class="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">Clear</button>
                         </div>
                     </div>
-                    ` : ''}
-                `;
-                
-                songDetailInfo.innerHTML = detailHTML;
-            };
-        });
-    </script>
+                    <div id="playlist-items" class="playlist-items">
+                        <!-- Playlist items will be added dynamically -->
+                    </div>
+                    <div class="p-2 text-center border-t border-gray-700">
+                        <a href="playlist.html" class="block w-full px-2 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">
+                            Manage All Playlists
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hidden audio element for playback -->
+        <audio id="audio-element" preload="metadata"></audio>
+    </div>
+
+    <script src="js/main.js"></script>
 </body>
 </html>

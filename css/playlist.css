@@ -1,0 +1,123 @@
+/* playlist.css - Styles for the playlist management page */
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+/* Animation classes */
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Playlist specific styles */
+.song-item {
+    border-bottom: 1px solid #2d3748;
+    transition: background-color 0.15s ease;
+}
+
+.song-item:last-child {
+    border-bottom: none;
+}
+
+.song-item:hover .remove-btn,
+.song-item:hover .play-btn {
+    opacity: 1;
+}
+
+.remove-btn, .play-btn {
+    opacity: 0.5;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .playlist-layout {
+        flex-direction: column;
+    }
+    
+    .playlist-sidebar {
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .playlist-content {
+        width: 100%;
+    }
+}
+
+/* Modal animations */
+.modal-overlay {
+    transition: opacity 0.3s ease;
+}
+
+.modal-container {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-overlay.hidden .modal-container {
+    transform: translateY(20px);
+    opacity: 0;
+}
+
+/* Background colors */
+.bg-gray-750 {
+    background-color: #293548;
+}
+
+/* Status indicators */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.status-dot.active {
+    background-color: #10b981;
+}
+
+.status-dot.inactive {
+    background-color: #6b7280;
+}
+
+/* Empty state styling */
+.empty-playlist-container {
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 2px dashed #4b5563;
+    border-radius: 8px;
+    margin: 20px 0;
+    padding: 40px;
+    background: rgba(0, 0, 0, 0.2);
+}
