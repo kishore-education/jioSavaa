@@ -1,0 +1,6 @@
+// Copy this file to js/config.js and set your real Gemini API key.
+// WARNING: Do NOT commit `js/config.js` to version control. It's ignored by .gitignore.
+// Example:
+// window.__GEMINI_API_KEY = 'AIzaSy...your_key_here...';
+
+window.__GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE';

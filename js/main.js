@@ -38,6 +38,19 @@
             const playlistDropdown = document.getElementById('playlist-dropdown');
             const playlistItems = document.getElementById('playlist-items');
             const playlistCount = document.getElementById('playlist-count');
+            const shuffleBtn = document.getElementById('shuffle-btn');
+            const repeatBtn = document.getElementById('repeat-btn');
+            const repeatModeLabel = document.getElementById('repeat-mode');
+            const speedSelect = document.getElementById('speed-select');
+            const likeBtn = document.getElementById('like-btn');
+            const heroSongImage = document.getElementById('hero-song-image');
+            const heroSongTitle = document.getElementById('hero-song-title');
+            const heroSongArtist = document.getElementById('hero-song-artist');
+            const heroPlayBtn = document.getElementById('hero-play-btn');
+            const heroShuffleBtn = document.getElementById('hero-shuffle-btn');
+            const playerQuality = document.getElementById('player-quality');
+            const playerYear = document.getElementById('player-year');
+            const playerLanguage = document.getElementById('player-language');
 
             // API base URLs
             // Primary API URL - This is the documented API endpoint
@@ -57,7 +70,8 @@
             // Function to show a message to the user
             const showMessage = (text, type = 'info', isLoading = false) => {
                 messageText.textContent = text;
-                messageBox.className = `mb-6 p-4 rounded-lg text-center font-medium transition-opacity duration-300 ${type === 'error' ? 'bg-red-900 text-red-200' : 'bg-blue-900 text-blue-200'} block opacity-100`;
+                messageBox.className = `message-box${type === 'error' ? ' error' : ''}`;
+                messageBox.classList.remove('hidden');
                 
                 // Show or hide the loading spinner
                 if (isLoading) {
@@ -70,7 +84,6 @@
             // Function to clear the message box
             const hideMessage = () => {
                 messageBox.classList.add('hidden');
-                messageBox.classList.remove('block');
                 loadingSpinner.classList.add('hidden');
             };
 
@@ -211,7 +224,7 @@
                                     const img500 = song.image.find(img => img.quality === '500x500');
                                     image = img500?.url || song.image[song.image.length - 1].url;
                                 } else {
-                                    image = 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                                    image = 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Image';
                                 }
                                 if (song.downloadUrl && Array.isArray(song.downloadUrl) && song.downloadUrl.length > 0) {
                                     // Look for the highest quality download URL available
@@ -260,7 +273,7 @@
                                 songName = song.name || song.title || 'Unknown';
                                 artistName = song.primaryArtists || 'Unknown Artist';
                                 albumName = song.album?.name || 'Unknown Album';
-                                image = song.image?.[2]?.link || song.image || 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                                image = song.image?.[2]?.link || song.image || 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Image';
                                 
                                 // Get highest quality download URL - for FALLBACK API
                                 if (song.downloadUrl && Array.isArray(song.downloadUrl)) {
@@ -278,7 +291,7 @@
                                 songName = song.name || song.title || 'Unknown';
                                 artistName = song.artists?.primary?.map(artist => artist.name).join(', ') || song.primaryArtists || 'Unknown Artist';
                                 albumName = song.album?.name || 'Unknown Album';
-                                image = song.image?.[2]?.url || song.image || 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                                image = song.image?.[2]?.url || song.image || 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Image';
                                 
                                 // Get highest quality download URL - for THIRD API
                                 if (song.downloadUrl && Array.isArray(song.downloadUrl) && song.downloadUrl.length > 0) {
@@ -303,7 +316,7 @@
                                     downloadUrl = song.url;
                                 }
                             }
-                            const fallbackImage = 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                            const fallbackImage = 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Image';
                             const duration = song.duration ? `${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}` : '--:--';
                             const language = song.language ? song.language.charAt(0).toUpperCase() + song.language.slice(1) : '';
                             const year = song.year || '';
@@ -326,35 +339,33 @@
                                 }
                             }
                             const songCard = document.createElement('div');
-                            songCard.className = 'bg-gray-700 rounded-xl shadow-lg overflow-hidden flex flex-col transition-transform duration-200 hover:scale-105';
+                            songCard.className = 'song-card';
                             songCard.innerHTML = `
-                                <div class="relative group">
-                                    <img src="${image}" alt="${songName}" class="w-full h-48 object-cover" onerror="this.src='${fallbackImage}'">
-                                    <div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <button class="play-song-btn p-4 bg-green-600 text-white rounded-full hover:bg-green-700 transition-transform duration-200 hover:scale-110">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                <div class="song-card__media">
+                                    <img src="${image}" alt="${songName}" onerror="this.src='${fallbackImage}'">
+                                    <div class="song-card__overlay">
+                                        <button class="player-btn play-song-btn" aria-label="Play song">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" viewBox="0 0 16 16">
                                                 <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
                                             </svg>
                                         </button>
                                     </div>
                                 </div>
-                                <div class="p-4 flex flex-col flex-grow">
-                                    <h3 class="text-xl font-bold mb-1 truncate">${songName}</h3>
-                                    <p class="text-sm text-gray-300 truncate">Artist: ${artistName}</p>
-                                    <p class="text-sm text-gray-400 truncate">Album: ${albumName}</p>
-                                    <div class="flex flex-wrap text-xs text-gray-400 gap-2 mt-1 mb-4">
-                                        ${duration ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${duration}</span>` : ''}
-                                        ${language ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${language}</span>` : ''}
-                                        ${year ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${year}</span>` : ''}
-                                        ${quality ? `<span class="bg-gray-600 px-2 py-1 rounded-md">${quality}</span>` : ''}
+                                <div class="song-card__actions">
+                                    <div>
+                                        <h3 class="song-card__title">${songName}</h3>
+                                        <p class="song-card__meta">Artist: ${artistName}</p>
+                                        <p class="song-card__meta">Album: ${albumName}</p>
                                     </div>
-                                    <div class="flex gap-2 mt-auto">
-                                        <button class="view-details-btn flex-1 px-4 py-2 bg-blue-600 text-white font-bold text-center rounded-full hover:bg-blue-700 transition-colors duration-200">
-                                            Info
-                                        </button>
-                                        <button class="add-to-playlist-btn flex-1 px-4 py-2 bg-purple-600 text-white font-bold text-center rounded-full hover:bg-purple-700 transition-colors duration-200">
-                                            Add to Playlist
-                                        </button>
+                                    <div class="tag-row">
+                                        ${duration ? `<span class="tag">${duration}</span>` : ''}
+                                        ${language ? `<span class="tag">${language}</span>` : ''}
+                                        ${year ? `<span class="tag">${year}</span>` : ''}
+                                        ${quality ? `<span class="tag">${quality}</span>` : ''}
+                                    </div>
+                                    <div class="song-card__buttons">
+                                        <button class="view-details-btn info-btn">Info</button>
+                                        <button class="add-to-playlist-btn playlist-btn">Add to Playlist</button>
                                     </div>
                                 </div>
                             `;
@@ -385,7 +396,7 @@
                                     playSong(songData);
                                 });
                             } else {
-                                playBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                                playBtn.classList.add('disabled');
                                 playBtn.disabled = true;
                             }
                             
@@ -397,8 +408,7 @@
                                     showMessage('Added to your playlist!', 'success');
                                 });
                             } else {
-                                addToPlaylistBtn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
-                                addToPlaylistBtn.classList.add('bg-gray-500', 'cursor-not-allowed');
+                                addToPlaylistBtn.classList.add('disabled');
                                 addToPlaylistBtn.disabled = true;
                                 addToPlaylistBtn.textContent = 'Unavailable';
                             }
@@ -440,7 +450,10 @@
             };
 
             // Gemini API configuration
-            const GEMINI_API_KEY = 'AIzaSyBl_dLKjBX4qvyLe6rLNaO2KDjQDL4IOJY';
+            // Prefer setting the key via a runtime config (see js/config.js.example).
+            // At runtime this will use `window.__GEMINI_API_KEY` (if set) or fall back
+            // to the existing key to preserve current behaviour.
+            const GEMINI_API_KEY = (typeof window !== 'undefined' && (window.__GEMINI_API_KEY || window.GEMINI_API_KEY)) || 'AIzaSyBl_dLKjBX4qvyLe6rLNaO2KDjQDL4IOJY';
             const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
             const GEMINI_DETAIL_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
             
@@ -482,7 +495,7 @@
                 }
                 
                 // Show loading indicator for new searches
-                suggestionContainer.innerHTML = '<div class="p-2 text-center text-gray-400">Loading suggestions...</div>';
+                suggestionContainer.innerHTML = '<div class="suggestion-loading">Loading suggestions...</div>';
                 suggestionContainer.style.display = 'block';
                 
                 try {
@@ -911,20 +924,18 @@
                 modalSongAlbum.textContent = song.album || '';
                 modalSongImage.src = song.image;
                 modalSongImage.onerror = () => {
-                    modalSongImage.src = 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                    modalSongImage.src = 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Image';
                 };
                 
                 // Set download button
                 if (song.downloadUrl) {
                     modalDownloadButton.href = song.downloadUrl;
                     modalDownloadButton.download = `${song.name}.mp3`;
-                    modalDownloadButton.classList.remove('bg-gray-500', 'cursor-not-allowed');
-                    modalDownloadButton.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                    modalDownloadButton.classList.remove('disabled');
                     modalDownloadButton.textContent = `Download ${song.quality ? `(${song.quality})` : ''}`;
                 } else {
                     modalDownloadButton.removeAttribute('href');
-                    modalDownloadButton.classList.remove('bg-purple-600', 'hover:bg-purple-700');
-                    modalDownloadButton.classList.add('bg-gray-500', 'cursor-not-allowed');
+                    modalDownloadButton.classList.add('disabled');
                     modalDownloadButton.textContent = 'Download Unavailable';
                 }
                 
@@ -945,49 +956,47 @@
                 
                 // Populate details
                 const detailHTML = `
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">About this Song</h3>
-                        <p class="text-gray-300">${details.background}</p>
+                    <div class="detail-block">
+                        <h3 class="detail-heading">About this Song</h3>
+                        <p class="detail-text">${details.background}</p>
                     </div>
                     
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Artist</h3>
-                        <p class="text-gray-300">${details.artistInfo}</p>
+                    <div class="detail-block">
+                        <h3 class="detail-heading">Artist</h3>
+                        <p class="detail-text">${details.artistInfo}</p>
                     </div>
                     
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Genre & Style</h3>
-                        <p class="text-gray-300">${details.genre}</p>
+                    <div class="detail-block">
+                        <h3 class="detail-heading">Genre & Style</h3>
+                        <p class="detail-text">${details.genre}</p>
                     </div>
                     
                     ${details.themes ? `
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Themes & Lyrics</h3>
-                        <p class="text-gray-300">${details.themes}</p>
+                    <div class="detail-block">
+                        <h3 class="detail-heading">Themes & Lyrics</h3>
+                        <p class="detail-text">${details.themes}</p>
                     </div>
                     ` : ''}
                     
                     ${details.reception ? `
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">Reception</h3>
-                        <p class="text-gray-300">${details.reception}</p>
+                    <div class="detail-block">
+                        <h3 class="detail-heading">Reception</h3>
+                        <p class="detail-text">${details.reception}</p>
                     </div>
                     ` : ''}
                     
                     ${details.relatedSongs && details.relatedSongs.length > 0 ? `
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-purple-400 mb-2">You Might Also Like</h3>
-                        <ul class="list-disc list-inside text-gray-300 ml-2">
+                    <div class="detail-block">
+                        <h3 class="detail-heading">You Might Also Like</h3>
+                        <ul class="detail-list">
                             ${details.relatedSongs.map(song => `<li>${song}</li>`).join('')}
                         </ul>
                     </div>
                     ` : ''}
                     
                     ${details.tags && details.tags.length > 0 ? `
-                    <div class="mt-4">
-                        <div class="flex flex-wrap gap-1">
-                            ${details.tags.map(tag => `<span class="song-detail-tag">${tag}</span>`).join('')}
-                        </div>
+                    <div class="detail-tags">
+                        ${details.tags.map(tag => `<span class="song-detail-tag">${tag}</span>`).join('')}
                     </div>
                     ` : ''}
                 `;
@@ -1003,7 +1012,11 @@
                 CURRENT_PLAYLIST: 'music_player_current_playlist',
                 CURRENT_INDEX: 'music_player_current_index',
                 VOLUME: 'music_player_volume',
-                LAST_PLAYED: 'music_player_last_played'
+                LAST_PLAYED: 'music_player_last_played',
+                SHUFFLE: 'music_player_shuffle',
+                REPEAT: 'music_player_repeat',
+                SPEED: 'music_player_speed',
+                LIKED: 'music_player_liked'
             };
             
             // Playlist Management
@@ -1012,9 +1025,124 @@
             };
             let currentPlaylistId = 'default';
             let currentSongIndex = -1;
+            let isShuffle = false;
+            let repeatMode = 'off';
+            let likedSongs = {};
+            const shuffleHistory = [];
             
             // Shorthand for accessing current playlist
             const getCurrentPlaylist = () => playlists[currentPlaylistId].songs;
+
+            const buildSongKey = (song) => `${song.name}::${song.artist}`;
+
+            const updateShuffleUI = () => {
+                if (shuffleBtn) {
+                    shuffleBtn.classList.toggle('active', isShuffle);
+                }
+                if (heroShuffleBtn) {
+                    heroShuffleBtn.classList.toggle('active', isShuffle);
+                }
+            };
+
+            const updateRepeatUI = () => {
+                if (repeatModeLabel) {
+                    repeatModeLabel.textContent = repeatMode === 'one' ? 'One' : repeatMode === 'all' ? 'All' : 'Off';
+                }
+                if (repeatBtn) {
+                    repeatBtn.classList.toggle('active', repeatMode !== 'off');
+                }
+            };
+
+            const updateLikeButton = (song) => {
+                if (!likeBtn) return;
+                if (!song) {
+                    likeBtn.classList.remove('active');
+                    return;
+                }
+                const isLiked = Boolean(likedSongs[buildSongKey(song)]);
+                likeBtn.classList.toggle('active', isLiked);
+            };
+
+            const updateHeroPanel = (song) => {
+                if (!heroSongImage || !heroSongTitle || !heroSongArtist) return;
+                if (!song) {
+                    heroSongImage.src = 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Song';
+                    heroSongTitle.textContent = 'No song selected';
+                    heroSongArtist.textContent = 'Search to begin your session';
+                    return;
+                }
+                heroSongImage.src = song.image || 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Song';
+                heroSongImage.onerror = () => {
+                    heroSongImage.src = 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Song';
+                };
+                heroSongTitle.textContent = song.name;
+                heroSongArtist.textContent = song.artist;
+            };
+
+            const updatePlayerMeta = (song) => {
+                if (!song) {
+                    if (playerQuality) playerQuality.textContent = '--';
+                    if (playerYear) playerYear.textContent = '--';
+                    if (playerLanguage) playerLanguage.textContent = '--';
+                    return;
+                }
+                if (playerQuality) playerQuality.textContent = song.quality || '--';
+                if (playerYear) playerYear.textContent = song.year || '--';
+                if (playerLanguage) playerLanguage.textContent = song.language || '--';
+            };
+
+            const applyArtworkTheme = (imageUrl) => {
+                if (!imageUrl) return;
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.src = imageUrl;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const size = 24;
+                    canvas.width = size;
+                    canvas.height = size;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+                    ctx.drawImage(img, 0, 0, size, size);
+                    const data = ctx.getImageData(0, 0, size, size).data;
+                    let r = 0;
+                    let g = 0;
+                    let b = 0;
+                    let count = 0;
+                    for (let i = 0; i < data.length; i += 4) {
+                        r += data[i];
+                        g += data[i + 1];
+                        b += data[i + 2];
+                        count += 1;
+                    }
+                    r = Math.round(r / count);
+                    g = Math.round(g / count);
+                    b = Math.round(b / count);
+                    document.documentElement.style.setProperty('--accent', `rgb(${r}, ${g}, ${b})`);
+                    document.documentElement.style.setProperty('--accent-2', `rgba(${Math.min(255, r + 40)}, ${Math.min(255, g + 60)}, ${Math.min(255, b + 80)}, 1)`);
+                    document.documentElement.style.setProperty('--glow', `0 0 40px rgba(${r}, ${g}, ${b}, 0.4)`);
+                };
+                img.onerror = () => {
+                    document.documentElement.style.setProperty('--accent', '#f97316');
+                    document.documentElement.style.setProperty('--accent-2', '#22d3ee');
+                    document.documentElement.style.setProperty('--glow', '0 0 40px rgba(249, 115, 22, 0.35)');
+                };
+            };
+
+            const updateMediaSession = (song) => {
+                if (!('mediaSession' in navigator) || !song) return;
+                const artwork = song.image ? [{ src: song.image, sizes: '512x512', type: 'image/jpeg' }] : [];
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: song.name,
+                    artist: song.artist,
+                    album: song.album || 'JioSavaa',
+                    artwork
+                });
+                navigator.mediaSession.setActionHandler('play', () => audioElement.play());
+                navigator.mediaSession.setActionHandler('pause', () => pauseSong());
+                navigator.mediaSession.setActionHandler('previoustrack', () => playPreviousSong());
+                navigator.mediaSession.setActionHandler('nexttrack', () => playNextSong({ fromEnded: false }));
+            };
             
             // Load saved playlists from local storage
             const loadSavedPlaylist = () => {
@@ -1023,6 +1151,10 @@
                     const savedCurrentPlaylist = localStorage.getItem(STORAGE_KEYS.CURRENT_PLAYLIST);
                     const savedIndex = localStorage.getItem(STORAGE_KEYS.CURRENT_INDEX);
                     const savedVolume = localStorage.getItem(STORAGE_KEYS.VOLUME);
+                    const savedShuffle = localStorage.getItem(STORAGE_KEYS.SHUFFLE);
+                    const savedRepeat = localStorage.getItem(STORAGE_KEYS.REPEAT);
+                    const savedSpeed = localStorage.getItem(STORAGE_KEYS.SPEED);
+                    const savedLiked = localStorage.getItem(STORAGE_KEYS.LIKED);
                     
                     if (savedPlaylists) {
                         playlists = JSON.parse(savedPlaylists);
@@ -1058,6 +1190,27 @@
                             volumeMuteIcon.classList.remove('hidden');
                         }
                     }
+
+                    if (savedShuffle !== null) {
+                        isShuffle = savedShuffle === 'true';
+                    }
+
+                    if (savedRepeat) {
+                        repeatMode = savedRepeat;
+                    }
+
+                    if (savedSpeed) {
+                        const playbackRate = parseFloat(savedSpeed);
+                        audioElement.playbackRate = playbackRate;
+                        if (speedSelect) speedSelect.value = savedSpeed;
+                    }
+
+                    if (savedLiked) {
+                        likedSongs = JSON.parse(savedLiked);
+                    }
+
+                    updateShuffleUI();
+                    updateRepeatUI();
                     
                     // Update UI with loaded playlist
                     updatePlaylistDisplay();
@@ -1068,9 +1221,13 @@
                         const currentSong = currentPlaylist[currentSongIndex];
                         
                         // Update player UI without playing
-                        playerSongImage.src = currentSong.image || 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                        playerSongImage.src = currentSong.image || 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Image';
                         playerSongTitle.textContent = currentSong.name;
                         playerSongArtist.textContent = currentSong.artist;
+                        updateHeroPanel(currentSong);
+                        updatePlayerMeta(currentSong);
+                        updateLikeButton(currentSong);
+                        applyArtworkTheme(currentSong.image);
                         audioPlayer.classList.add('active');
                         
                         // Prepare the audio source without playing
@@ -1094,6 +1251,10 @@
                     localStorage.setItem(STORAGE_KEYS.CURRENT_INDEX, currentSongIndex.toString());
                     localStorage.setItem(STORAGE_KEYS.VOLUME, audioElement.volume.toString());
                     localStorage.setItem(STORAGE_KEYS.LAST_PLAYED, Date.now().toString());
+                    localStorage.setItem(STORAGE_KEYS.SHUFFLE, isShuffle.toString());
+                    localStorage.setItem(STORAGE_KEYS.REPEAT, repeatMode);
+                    localStorage.setItem(STORAGE_KEYS.SPEED, audioElement.playbackRate.toString());
+                    localStorage.setItem(STORAGE_KEYS.LIKED, JSON.stringify(likedSongs));
                     console.log('Saved playlists to local storage');
                 } catch (error) {
                     console.error('Error saving playlists:', error);
@@ -1148,7 +1309,7 @@
                     const item = document.createElement('div');
                     item.className = `playlist-item ${isActive ? 'active' : ''}`;
                     item.innerHTML = `
-                        <img class="playlist-item-img" src="${song.image || 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image'}" onerror="this.src='https://placehold.co/500x500/1e293b/d1d5db?text=No+Image'">
+                        <img class="playlist-item-img" src="${song.image || 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Image'}" onerror="this.src='https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Image'">
                         <div class="playlist-item-info">
                             <div class="playlist-item-title">${song.name}</div>
                             <div class="playlist-item-artist">${song.artist}</div>
@@ -1235,9 +1396,21 @@
                 }
                 
                 // Update player UI
-                playerSongImage.src = song.image || 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Image';
+                playerSongImage.src = song.image || 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Image';
+                playerSongImage.onerror = () => {
+                    playerSongImage.src = 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Image';
+                };
                 playerSongTitle.textContent = song.name;
                 playerSongArtist.textContent = song.artist;
+                updateHeroPanel(song);
+                updatePlayerMeta(song);
+                updateLikeButton(song);
+                applyArtworkTheme(song.image);
+                updateMediaSession(song);
+                if (heroPlayBtn) heroPlayBtn.textContent = 'Pause';
+                if (currentSongIndex >= 0 && shuffleHistory[shuffleHistory.length - 1] !== currentSongIndex) {
+                    shuffleHistory.push(currentSongIndex);
+                }
                 
                 // Show the player as active
                 audioPlayer.classList.add('active');
@@ -1255,14 +1428,32 @@
                 audioElement.pause();
                 playIcon.classList.remove('hidden');
                 pauseIcon.classList.add('hidden');
+                if (heroPlayBtn) heroPlayBtn.textContent = 'Play';
             };
             
             // Function to play the next song
-            const playNextSong = () => {
+            const playNextSong = ({ fromEnded = false } = {}) => {
                 const currentPlaylist = getCurrentPlaylist();
                 if (currentPlaylist.length === 0) return;
                 
-                currentSongIndex = (currentSongIndex + 1) % currentPlaylist.length;
+                if (isShuffle && currentPlaylist.length > 1) {
+                    let nextIndex = currentSongIndex;
+                    while (nextIndex === currentSongIndex) {
+                        nextIndex = Math.floor(Math.random() * currentPlaylist.length);
+                    }
+                    currentSongIndex = nextIndex;
+                    playSong(currentPlaylist[currentSongIndex]);
+                    return;
+                }
+
+                const atEnd = currentSongIndex >= currentPlaylist.length - 1;
+                if (atEnd && repeatMode === 'off' && fromEnded) {
+                    pauseSong();
+                    audioElement.currentTime = 0;
+                    return;
+                }
+
+                currentSongIndex = atEnd ? 0 : currentSongIndex + 1;
                 playSong(currentPlaylist[currentSongIndex]);
             };
             
@@ -1270,6 +1461,13 @@
             const playPreviousSong = () => {
                 const currentPlaylist = getCurrentPlaylist();
                 if (currentPlaylist.length === 0) return;
+
+                if (isShuffle && shuffleHistory.length > 1) {
+                    shuffleHistory.pop();
+                    currentSongIndex = shuffleHistory[shuffleHistory.length - 1];
+                    playSong(currentPlaylist[currentSongIndex]);
+                    return;
+                }
                 
                 currentSongIndex = (currentSongIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
                 playSong(currentPlaylist[currentSongIndex]);
@@ -1353,21 +1551,75 @@
                         audioElement.play();
                         playIcon.classList.add('hidden');
                         pauseIcon.classList.remove('hidden');
-                    } else if (playlist.length > 0) {
+                    } else if (getCurrentPlaylist().length > 0) {
                         // If no song is loaded but we have songs in playlist
                         currentSongIndex = 0;
-                        playSong(playlist[currentSongIndex]);
+                        playSong(getCurrentPlaylist()[currentSongIndex]);
                     }
                 } else {
                     pauseSong();
                 }
             });
+
+            if (heroPlayBtn) {
+                heroPlayBtn.addEventListener('click', () => {
+                    playPauseBtn.click();
+                });
+            }
+
+            if (shuffleBtn) {
+                shuffleBtn.addEventListener('click', () => {
+                    isShuffle = !isShuffle;
+                    updateShuffleUI();
+                    savePlaylistToStorage();
+                });
+            }
+
+            if (heroShuffleBtn) {
+                heroShuffleBtn.addEventListener('click', () => {
+                    isShuffle = !isShuffle;
+                    updateShuffleUI();
+                    savePlaylistToStorage();
+                });
+            }
+
+            if (repeatBtn) {
+                repeatBtn.addEventListener('click', () => {
+                    repeatMode = repeatMode === 'off' ? 'all' : repeatMode === 'all' ? 'one' : 'off';
+                    updateRepeatUI();
+                    savePlaylistToStorage();
+                });
+            }
+
+            if (speedSelect) {
+                speedSelect.addEventListener('change', (e) => {
+                    const rate = parseFloat(e.target.value);
+                    audioElement.playbackRate = rate;
+                    savePlaylistToStorage();
+                });
+            }
+
+            if (likeBtn) {
+                likeBtn.addEventListener('click', () => {
+                    const currentPlaylist = getCurrentPlaylist();
+                    const song = currentPlaylist[currentSongIndex];
+                    if (!song) return;
+                    const key = buildSongKey(song);
+                    if (likedSongs[key]) {
+                        delete likedSongs[key];
+                    } else {
+                        likedSongs[key] = true;
+                    }
+                    updateLikeButton(song);
+                    savePlaylistToStorage();
+                });
+            }
             
             // Previous button
             prevBtn.addEventListener('click', playPreviousSong);
             
             // Next button
-            nextBtn.addEventListener('click', playNextSong);
+            nextBtn.addEventListener('click', () => playNextSong({ fromEnded: false }));
             
             // Progress bar click
             progressContainer.addEventListener('click', setProgress);
@@ -1493,7 +1745,9 @@
                     // Reset UI
                     playerSongTitle.textContent = 'No song selected';
                     playerSongArtist.textContent = 'Select a song to play';
-                    playerSongImage.src = 'https://placehold.co/500x500/1e293b/d1d5db?text=No+Song';
+                    playerSongImage.src = 'https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Song';
+                    updateHeroPanel(null);
+                    updatePlayerMeta(null);
                     
                     showMessage('Playlist cleared', 'info');
                 }
@@ -1501,14 +1755,31 @@
             
             // Audio element events
             audioElement.addEventListener('timeupdate', updateProgress);
+
+            audioElement.addEventListener('play', () => {
+                audioPlayer.classList.add('playing');
+                if (heroPlayBtn) heroPlayBtn.textContent = 'Pause';
+                document.body.classList.add('is-playing');
+            });
+
+            audioElement.addEventListener('pause', () => {
+                audioPlayer.classList.remove('playing');
+                if (heroPlayBtn) heroPlayBtn.textContent = 'Play';
+                document.body.classList.remove('is-playing');
+            });
             
             audioElement.addEventListener('loadedmetadata', () => {
                 totalTimeDisplay.textContent = formatTime(audioElement.duration);
             });
             
             audioElement.addEventListener('ended', () => {
+                if (repeatMode === 'one') {
+                    audioElement.currentTime = 0;
+                    audioElement.play();
+                    return;
+                }
                 // Play next song when current one ends
-                playNextSong();
+                playNextSong({ fromEnded: true });
             });
             
             // Save volume changes to local storage when changed
@@ -1592,7 +1863,7 @@
                         }, 10);
                         
                         // Add active styling to the search icon
-                        topSearchIcon.classList.add('bg-gray-700', 'text-white');
+                        topSearchIcon.classList.add('active');
                     } else {
                         // Hide search section with animation
                         searchSection.classList.add('scale-y-0', 'opacity-0');
@@ -1602,10 +1873,47 @@
                         }, 300); // Match the duration in the CSS transition
                         
                         // Remove active styling from the search icon
-                        topSearchIcon.classList.remove('bg-gray-700', 'text-white');
+                        topSearchIcon.classList.remove('active');
                     }
                 });
             }
+
+            const defaultQuery = 'tamil song';
+            if (searchInput) {
+                searchInput.value = defaultQuery;
+            }
+            if (languageFilterInput) {
+                languageFilterInput.value = 'tamil';
+            }
+            fetchSongs(defaultQuery);
+
+            document.addEventListener('keydown', (e) => {
+                const target = e.target;
+                if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                    return;
+                }
+
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    playPauseBtn.click();
+                }
+
+                if (e.key === 'ArrowRight') {
+                    audioElement.currentTime = Math.min(audioElement.duration || 0, audioElement.currentTime + 10);
+                }
+
+                if (e.key === 'ArrowLeft') {
+                    audioElement.currentTime = Math.max(0, audioElement.currentTime - 10);
+                }
+
+                if (e.key === 'ArrowUp') {
+                    audioElement.volume = Math.min(1, audioElement.volume + 0.05);
+                }
+
+                if (e.key === 'ArrowDown') {
+                    audioElement.volume = Math.max(0, audioElement.volume - 0.05);
+                }
+            });
             
             // Load saved playlist and player state from local storage
             loadSavedPlaylist();
