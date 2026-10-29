@@ -3,7 +3,7 @@ import { useNavigation } from '../../context/NavigationContext';
 import { Home, Search, Library, Heart } from 'lucide-react';
 
 export const BottomNav: React.FC = () => {
-  const { currentPage, navigateHome, navigateSearch, navigateLibrary, navigateLikedSongs, openLogoFullscreen } = useNavigation();
+  const { currentPage, navigateHome, navigateSearch, navigateLibrary, navigateLikedSongs } = useNavigation();
 
   const isHome = currentPage.type === 'home';
   const isSearch = currentPage.type === 'search';
@@ -50,22 +50,6 @@ export const BottomNav: React.FC = () => {
       >
         <Heart size={20} />
         <span className="text-[10px] mt-1 font-medium">Liked</span>
-      </button>
-
-      <button
-        onClick={openLogoFullscreen}
-        className="flex flex-col items-center justify-center flex-1 py-1 transition hover:text-white group"
-        title="Madhu Leka Logo"
-      >
-        <div className="relative">
-          <img 
-            src="/madhu-leka-logo.jpg" 
-            alt="Madhu Leka Logo" 
-            className="w-5 h-5 rounded-full object-cover object-[48%_28%] border border-[#1ed760] group-hover:scale-110 transition-transform"
-          />
-          <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 bg-[#1ed760] rounded-full" />
-        </div>
-        <span className="text-[10px] mt-1 font-medium group-hover:text-[#1ed760] transition-colors">Logo</span>
       </button>
     </nav>
   );

@@ -16,7 +16,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   onSearchChange,
   accentRgb,
 }) => {
-  const { currentPage, canGoBack, canGoForward, goBack, goForward, navigateSearch, navigateHome, openLogoFullscreen } = useNavigation();
+  const { currentPage, canGoBack, canGoForward, goBack, goForward, navigateSearch, navigateHome } = useNavigation();
   const { openLanguageModal, languagePreferences } = useLibrary();
 
   const isSearchPage = currentPage.type === 'search';
@@ -65,26 +65,18 @@ export const TopNav: React.FC<TopNavProps> = ({
         {/* Mobile Brand Logo */}
         {!isSearchPage && (
           <div 
-            onClick={openLogoFullscreen}
+            onClick={navigateHome}
             className="flex md:hidden items-center gap-2 cursor-pointer select-none group flex-shrink-0"
-            title="Click to view full screen logo"
+            title="Spotify"
           >
-            <div className="relative">
-              <img 
-                src="/madhu-leka-logo.jpg" 
-                alt="Madhu Leka" 
-                className="w-8 h-8 rounded-full object-cover object-[48%_28%] border-2 border-[#1ed760] shadow-sm group-hover:scale-105 transition-transform"
-              />
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#1ed760] border border-black rounded-full" />
+            <div className="w-7 h-7 rounded-full bg-[#1ed760] flex items-center justify-center text-black shadow-sm group-hover:scale-105 transition-transform">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-black">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.503 17.308a.747.747 0 01-1.028.248c-2.813-1.718-6.353-2.107-10.525-1.155a.75.75 0 01-.334-1.462c4.568-1.042 8.489-.597 11.639 1.341a.75.75 0 01.248 1.028zm1.469-3.267a.936.936 0 01-1.286.309c-3.22-1.979-8.127-2.551-11.936-1.394a.938.938 0 11-.548-1.794c4.354-1.321 9.771-.684 13.461 1.583a.938.938 0 01.309 1.296zm.126-3.411C15.241 8.358 8.87 8.14 5.166 9.266a1.125 1.125 0 11-.65-2.155c4.256-1.292 11.298-1.041 15.688 1.564a1.125 1.125 0 11-1.106 1.956z"/>
+              </svg>
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-extrabold text-sm tracking-tight text-white group-hover:text-[#1ed760] transition-colors leading-tight truncate">
-                Madhu Leka
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#1ed760] leading-none">
-                Music
-              </span>
-            </div>
+            <span className="font-extrabold text-base tracking-tight text-white group-hover:text-[#1ed760] transition-colors">
+              Spotify
+            </span>
           </div>
         )}
 
@@ -144,16 +136,12 @@ export const TopNav: React.FC<TopNavProps> = ({
 
         {/* Desktop Profile Pill */}
         <div 
-          onClick={openLogoFullscreen}
-          className="hidden md:flex items-center gap-2 bg-black/60 hover:bg-black/90 p-1 pr-3 rounded-full cursor-pointer transition select-none border border-white/5 hover:border-[#1ed760]/40 group"
-          title="Click to view full screen logo"
+          className="hidden md:flex items-center gap-2 bg-black/60 hover:bg-black/90 p-1 pr-3 rounded-full cursor-pointer transition select-none border border-white/5 hover:border-white/20 group"
         >
-          <img 
-            src="/madhu-leka-logo.jpg" 
-            alt="Madhu Leka" 
-            className="w-7 h-7 rounded-full object-cover object-[48%_28%] border border-[#1ed760] group-hover:scale-105 transition-transform"
-          />
-          <span className="text-xs font-bold text-white group-hover:text-[#1ed760] transition-colors">Madhu Leka</span>
+          <div className="w-7 h-7 rounded-full bg-[#282828] flex items-center justify-center text-white font-bold text-xs">
+            <User size={15} />
+          </div>
+          <span className="text-xs font-bold text-white group-hover:text-white transition-colors">Spotify User</span>
         </div>
       </div>
     </header>

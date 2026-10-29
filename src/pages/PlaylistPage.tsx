@@ -21,7 +21,6 @@ interface PlaylistPageProps {
 export const PlaylistPage: React.FC<PlaylistPageProps> = ({ id, isCustom, onOpenAddToPlaylist }) => {
   const { getCustomPlaylist, deletePlaylist, reorderPlaylistSongs, removeSongFromPlaylist } = useLibrary();
   const { currentSong, isPlaying, playSong, togglePlayPause, toggleShuffle } = usePlayer();
-  const { openLogoFullscreen } = useNavigation();
 
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -165,18 +164,7 @@ export const PlaylistPage: React.FC<PlaylistPageProps> = ({ id, isCustom, onOpen
             </p>
           )}
           <div className="flex items-center justify-center sm:justify-start gap-2 text-xs sm:text-sm font-semibold text-white/90">
-            <div 
-              onClick={openLogoFullscreen}
-              className="flex items-center gap-1.5 cursor-pointer hover:text-[#1ed760] transition-colors group"
-              title="Click to view full screen logo"
-            >
-              <img 
-                src="/madhu-leka-logo.jpg" 
-                alt="Madhu Leka Music" 
-                className="w-5 h-5 rounded-full object-cover object-[48%_28%] border border-[#1ed760] group-hover:scale-110 transition-transform"
-              />
-              <span className="group-hover:underline">Madhu Leka Music</span>
-            </div>
+            <span>Spotify</span>
             <span>•</span>
             <span>{songs.length} songs</span>
             {songs.length > 0 && (

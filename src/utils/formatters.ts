@@ -36,7 +36,7 @@ export function getBestAudioUrl(downloadUrl?: DownloadUrlAsset[] | string): stri
 /**
  * Extracts highest resolution image URL from image array or string
  */
-export function getBestImageUrl(image?: ImageAsset[] | string, fallbackText = 'Madhu Leka Music'): string {
+export function getBestImageUrl(image?: ImageAsset[] | string, fallbackText = 'Spotify'): string {
   if (!image) return `https://placehold.co/500x500/181818/ffffff?text=${encodeURIComponent(fallbackText)}`;
   if (typeof image === 'string') return image;
   if (!Array.isArray(image) || image.length === 0) {

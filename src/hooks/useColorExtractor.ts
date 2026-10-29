@@ -24,7 +24,7 @@ function getHashColor(str: string): { r: number; g: number; b: number } {
   return FALLBACK_PALETTE[index];
 }
 
-export function useColorExtractor(imageUrl?: string, titleFallback = 'Madhu Leka Music') {
+export function useColorExtractor(imageUrl?: string, titleFallback = 'Spotify') {
   const [dominantColor, setDominantColor] = useState<{ r: number; g: number; b: number }>(() => 
     getHashColor(titleFallback)
   );

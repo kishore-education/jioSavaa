@@ -9,7 +9,6 @@ import { MiniPlayer } from '../player/MiniPlayer';
 import { QueueModal } from '../player/QueueModal';
 import { AddToPlaylistModal } from '../common/AddToPlaylistModal';
 import { LanguagePreferenceModal } from '../common/LanguagePreferenceModal';
-import { LogoFullscreenModal } from '../common/LogoFullscreenModal';
 import { HomePage } from '../../pages/HomePage';
 import { SearchPage } from '../../pages/SearchPage';
 import { LibraryPage } from '../../pages/LibraryPage';
@@ -120,7 +119,6 @@ export const AppLayout: React.FC = () => {
         isOpen={isLanguageModalOpen}
         onClose={closeLanguageModal}
       />
-      <LogoFullscreenModal />
 
       {/* Persistent Audio Player Footer Bar */}
       <AudioPlayer />

@@ -7,7 +7,6 @@ interface NavigationContextType {
   historyIndex: number;
   canGoBack: boolean;
   canGoForward: boolean;
-  isLogoFullscreen: boolean;
   navigateTo: (page: ActivePage) => void;
   goBack: () => void;
   goForward: () => void;
@@ -18,9 +17,6 @@ interface NavigationContextType {
   navigatePlaylist: (id: string, isCustom?: boolean) => void;
   navigateAlbum: (id: string) => void;
   navigateArtist: (id: string) => void;
-  openLogoFullscreen: () => void;
-  closeLogoFullscreen: () => void;
-  toggleLogoFullscreen: () => void;
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
@@ -28,7 +24,6 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [history, setHistory] = useState<ActivePage[]>([{ type: 'home' }]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
-  const [isLogoFullscreen, setIsLogoFullscreen] = useState<boolean>(false);
 
   const currentPage = history[historyIndex] || { type: 'home' };
   const canGoBack = historyIndex > 0;
@@ -63,10 +58,6 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const navigateAlbum = (id: string) => navigateTo({ type: 'album', id });
   const navigateArtist = (id: string) => navigateTo({ type: 'artist', id });
 
-  const openLogoFullscreen = useCallback(() => setIsLogoFullscreen(true), []);
-  const closeLogoFullscreen = useCallback(() => setIsLogoFullscreen(false), []);
-  const toggleLogoFullscreen = useCallback(() => setIsLogoFullscreen((prev) => !prev), []);
-
   return (
     <NavigationContext.Provider
       value={{
@@ -75,7 +66,6 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         historyIndex,
         canGoBack,
         canGoForward,
-        isLogoFullscreen,
         navigateTo,
         goBack,
         goForward,
@@ -86,9 +76,6 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         navigatePlaylist,
         navigateAlbum,
         navigateArtist,
-        openLogoFullscreen,
-        closeLogoFullscreen,
-        toggleLogoFullscreen,
       }}
     >
       {children}

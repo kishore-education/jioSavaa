@@ -586,7 +586,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         ? decodeHtmlEntities(currentSong.album.name)
         : typeof currentSong.album === 'string'
         ? decodeHtmlEntities(currentSong.album)
-        : 'Madhu Leka Music';
+        : 'Spotify';
 
       const bestImage = getBestImageUrl(currentSong.image, title);
 
@@ -600,7 +600,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       } else {
         artwork = [
           { src: bestImage, sizes: '500x500', type: 'image/jpeg' },
-          { src: '/madhu-leka-logo.jpg', sizes: '512x512', type: 'image/jpeg' }
         ];
       }
 

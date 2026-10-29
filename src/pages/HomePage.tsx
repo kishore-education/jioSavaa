@@ -309,7 +309,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenAddToPlaylist }) => {
                 </div>
 
                 <div className="flex items-center justify-between pt-3">
-                  <span className="text-[11px] font-bold text-white/70">Madhu Leka Mix</span>
+                  <span className="text-[11px] font-bold text-white/70">Spotify Mix</span>
                   <div className="w-11 h-11 rounded-full bg-[#1ed760] text-black flex items-center justify-center shadow-2xl opacity-0 group-hover:opacity-100 group-hover:scale-105 active:scale-95 transition-all">
                     <Play size={20} fill="black" className="ml-0.5" />
                   </div>

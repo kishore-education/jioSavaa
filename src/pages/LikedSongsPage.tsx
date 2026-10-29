@@ -16,7 +16,7 @@ export const LikedSongsPage: React.FC<LikedSongsPageProps> = ({ onOpenAddToPlayl
   const { likedSongs: rawLikedSongs } = useLibrary();
   const likedSongs = deduplicateSongs(rawLikedSongs);
   const { currentSong, isPlaying, playSong, togglePlayPause, toggleShuffle } = usePlayer();
-  const { navigateSearch, openLogoFullscreen } = useNavigation();
+  const { navigateSearch } = useNavigation();
 
   const [filterText, setFilterText] = useState('');
 
@@ -68,18 +68,7 @@ export const LikedSongsPage: React.FC<LikedSongsPageProps> = ({ onOpenAddToPlayl
             Liked Songs
           </h1>
           <div className="flex items-center justify-center sm:justify-start gap-2 text-xs sm:text-sm font-semibold text-white/90 mt-2">
-            <div 
-              onClick={openLogoFullscreen}
-              className="flex items-center gap-1.5 cursor-pointer hover:text-[#1ed760] transition-colors group"
-              title="Click to view full screen logo"
-            >
-              <img 
-                src="/madhu-leka-logo.jpg" 
-                alt="Madhu Leka" 
-                className="w-5 h-5 rounded-full object-cover object-[48%_28%] border border-[#1ed760] group-hover:scale-110 transition-transform"
-              />
-              <span className="group-hover:underline">Madhu Leka</span>
-            </div>
+            <span>Spotify User</span>
             <span>•</span>
             <span>{likedSongs.length} songs</span>
             {likedSongs.length > 0 && (

@@ -21,8 +21,7 @@ export const Sidebar: React.FC = () => {
     navigateSearch, 
     navigateLibrary, 
     navigateLikedSongs, 
-    navigatePlaylist,
-    openLogoFullscreen 
+    navigatePlaylist 
   } = useNavigation();
 
   const { customPlaylists, createPlaylist, deletePlaylist, likedSongs, openLanguageModal } = useLibrary();
@@ -41,30 +40,17 @@ export const Sidebar: React.FC = () => {
     <aside className="w-64 bg-black p-2 flex flex-col gap-2 flex-shrink-0 select-none hidden md:flex h-full">
       {/* Upper Navigation Card */}
       <div className="bg-[#121212] rounded-lg p-4 space-y-4">
-        {/* Madhu Leka Music Brand Logo */}
+        {/* Spotify Logo */}
         <div 
-          onClick={openLogoFullscreen}
-          className="flex items-center gap-3 cursor-pointer text-white px-1 mb-2 group"
-          title="Click to view full screen logo"
+          onClick={navigateHome}
+          className="flex items-center gap-2 cursor-pointer text-white px-2 mb-2 group"
         >
-          <div className="relative flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
-            <img 
-              src="/madhu-leka-logo.jpg" 
-              alt="Madhu Leka Music" 
-              className="w-10 h-10 rounded-full object-cover object-[48%_28%] border-2 border-[#1ed760] shadow-md shadow-[#1ed760]/30"
-            />
-            <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[#1ed760] border-2 border-[#121212] rounded-full flex items-center justify-center">
-              <span className="w-1.5 h-1.5 bg-black rounded-full"></span>
-            </span>
+          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black group-hover:scale-105 transition">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-black">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.503 17.308a.747.747 0 01-1.028.248c-2.813-1.718-6.353-2.107-10.525-1.155a.75.75 0 01-.334-1.462c4.568-1.042 8.489-.597 11.639 1.341a.75.75 0 01.248 1.028zm1.469-3.267a.936.936 0 01-1.286.309c-3.22-1.979-8.127-2.551-11.936-1.394a.938.938 0 11-.548-1.794c4.354-1.321 9.771-.684 13.461 1.583a.938.938 0 01.309 1.296zm.126-3.411C15.241 8.358 8.87 8.14 5.166 9.266a1.125 1.125 0 11-.65-2.155c4.256-1.292 11.298-1.041 15.688 1.564a1.125 1.125 0 11-1.106 1.956z"/>
+            </svg>
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="font-extrabold text-[16px] tracking-tight text-white group-hover:text-[#1ed760] transition-colors leading-tight truncate">
-              Madhu Leka
-            </span>
-            <span className="text-[11px] font-bold tracking-wider uppercase text-[#1ed760] group-hover:text-white transition-colors">
-              Music
-            </span>
-          </div>
+          <span className="font-bold text-lg tracking-tight">Spotify</span>
         </div>
 
         {/* Links */}
