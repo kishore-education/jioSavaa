@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { RepeatMode, Song } from '../types';
-import { getBestAudioUrl } from '../utils/formatters';
+import { decodeHtmlEntities, getArtistNames, getBestAudioUrl, getBestImageUrl } from '../utils/formatters';
 import { musicApi } from '../services/api';
 import { useLibrary } from './LibraryContext';
 import { recommendationEngine } from '../services/recommendationEngine';
@@ -484,6 +484,166 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setQueue(updated);
     setOriginalQueue(originalQueueRef.current);
   };
+
+  // Mutable function references for Media Session API (Bluetooth headphone / Hardware controls)
+  const nextTrackRef = useRef(nextTrack);
+  const previousTrackRef = useRef(previousTrack);
+  const togglePlayPauseRef = useRef(togglePlayPause);
+  const seekToRef = useRef(seekTo);
+
+  useEffect(() => {
+    nextTrackRef.current = nextTrack;
+  }, [nextTrack]);
+
+  useEffect(() => {
+    previousTrackRef.current = previousTrack;
+  }, [previousTrack]);
+
+  useEffect(() => {
+    togglePlayPauseRef.current = togglePlayPause;
+  }, [togglePlayPause]);
+
+  useEffect(() => {
+    seekToRef.current = seekTo;
+  }, [seekTo]);
+
+  // Set up Bluetooth Headphone Hardware Actions (Next, Previous, Play, Pause, Seek)
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    const actionHandlers: Array<[MediaSessionAction, MediaSessionActionHandler]> = [
+      ['play', () => {
+        if (audioRef.current) {
+          audioRef.current.play().catch(console.error);
+          setIsPlaying(true);
+        }
+      }],
+      ['pause', () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+        }
+      }],
+      ['previoustrack', () => {
+        previousTrackRef.current();
+      }],
+      ['nexttrack', () => {
+        nextTrackRef.current();
+      }],
+      ['seekto', (details) => {
+        if (details.seekTime !== undefined && details.seekTime !== null) {
+          seekToRef.current(details.seekTime);
+        }
+      }],
+      ['seekbackward', (details) => {
+        const offset = details.seekOffset || 10;
+        if (audioRef.current) {
+          seekToRef.current(Math.max(audioRef.current.currentTime - offset, 0));
+        }
+      }],
+      ['seekforward', (details) => {
+        const offset = details.seekOffset || 10;
+        if (audioRef.current) {
+          seekToRef.current(Math.min(audioRef.current.currentTime + offset, audioRef.current.duration || 0));
+        }
+      }],
+      ['stop', () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          setIsPlaying(false);
+        }
+      }]
+    ];
+
+    actionHandlers.forEach(([action, handler]) => {
+      try {
+        navigator.mediaSession.setActionHandler(action, handler);
+      } catch (err) {
+        // Specific browser action unsupported fallback
+      }
+    });
+
+    return () => {
+      actionHandlers.forEach(([action]) => {
+        try {
+          navigator.mediaSession.setActionHandler(action, null);
+        } catch (e) {
+          // ignore
+        }
+      });
+    };
+  }, []);
+
+  // Update Media Session Metadata for Bluetooth Headphone Screen, Watch & Lockscreen
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    if (currentSong) {
+      const title = decodeHtmlEntities(currentSong.name || currentSong.title || 'Unknown Track');
+      const artist = getArtistNames(currentSong);
+      const album = typeof currentSong.album === 'object' && currentSong.album?.name 
+        ? decodeHtmlEntities(currentSong.album.name)
+        : typeof currentSong.album === 'string'
+        ? decodeHtmlEntities(currentSong.album)
+        : 'Madhu Leka Music';
+
+      const bestImage = getBestImageUrl(currentSong.image, title);
+
+      let artwork: Array<{ src: string; sizes: string; type: string }> = [];
+      if (Array.isArray(currentSong.image) && currentSong.image.length > 0) {
+        artwork = currentSong.image.map((img) => ({
+          src: img.url,
+          sizes: img.quality || '500x500',
+          type: 'image/jpeg',
+        }));
+      } else {
+        artwork = [
+          { src: bestImage, sizes: '500x500', type: 'image/jpeg' },
+          { src: '/madhu-leka-logo.jpg', sizes: '512x512', type: 'image/jpeg' }
+        ];
+      }
+
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title,
+          artist,
+          album,
+          artwork,
+        });
+      } catch (err) {
+        console.warn('Failed to set media session metadata:', err);
+      }
+    } else {
+      navigator.mediaSession.metadata = null;
+    }
+  }, [currentSong]);
+
+  // Sync Media Session Playback State (playing vs paused)
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    } catch (e) {
+      // ignore
+    }
+  }, [isPlaying]);
+
+  // Sync Position State for Bluetooth timeline scrubber
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !('setPositionState' in navigator.mediaSession)) return;
+    if (duration > 0 && currentTime >= 0) {
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: Math.max(duration, 0.1),
+          playbackRate: audioRef.current?.playbackRate || 1,
+          position: Math.min(Math.max(currentTime, 0), duration),
+        });
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [currentTime, duration]);
 
   return (
     <PlayerContext.Provider
