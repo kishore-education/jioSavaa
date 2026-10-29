@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music World</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body class="app-body">
+    <div class="ambient-bg" aria-hidden="true"></div>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark">MW</div>
+                <div class="brand-text">
+                    <div class="brand-title">Music World</div>
+                    <div class="brand-subtitle">Immersive music playground</div>
+                </div>
+            </div>
+            <nav class="top-nav">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="playlist.html" class="nav-link">Playlists</a>
+            </nav>
+            <button id="top-search-icon" class="icon-btn" aria-label="Search">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+            </button>
+        </header>
+
+        <section class="hero">
+            <div class="hero-copy">
+                <p class="hero-kicker">New era playback</p>
+                <h1 class="hero-title">An immersive soundstage for every playlist.</h1>
+                <p class="hero-subtitle">Search, play, and shape your playlists with smart suggestions, dynamic themes, and studio-grade controls.</p>
+                <div class="hero-chips">
+                    <span class="chip">Adaptive glow</span>
+                    <span class="chip">Smart queue</span>
+                    <span class="chip">Lossless-ready</span>
+                    <span class="chip">Instant playlists</span>
+                </div>
+            </div>
+            <div class="hero-panel">
+                <div class="hero-now">
+                    <div class="hero-now__label">Now playing</div>
+                    <div class="hero-now__cover">
+                        <img id="hero-song-image" src="https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Song" alt="Now playing cover">
+                    </div>
+                    <div class="hero-now__info">
+                        <div id="hero-song-title" class="hero-now__title">No song selected</div>
+                        <div id="hero-song-artist" class="hero-now__artist">Search to begin your session</div>
+                    </div>
+                    <div class="hero-now__actions">
+                        <button id="hero-play-btn" class="pill-btn">Play</button>
+                        <button id="hero-shuffle-btn" class="pill-btn pill-btn--ghost">Shuffle</button>
+                    </div>
+                </div>
+                <div class="hero-meter" id="hero-meter" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search Section (Collapsible) -->
+        <div id="search-section" class="search-panel hidden transition-all duration-300 transform origin-top scale-y-0 opacity-0">
+            <div class="search-inner">
+                <div class="search-wrapper">
+                    <input
+                        id="search-input"
+                        type="text"
+                        placeholder="Search for a song, artist, or album..."
+                        class="search-input"
+                        autocomplete="off"
+                    >
+                    <div id="suggestion-container" class="suggestion-container"></div>
+                </div>
+                <button id="search-button" class="primary-btn">Search</button>
+            </div>
+        </div>
+
+        <!-- Advanced Search Filters (part of collapsible search section) -->
+        <div id="advanced-filters" class="filter-row hidden">
+            <input id="artist-filter" type="text" placeholder="Filter by Artist..." class="filter-input">
+            <input id="year-filter" type="text" placeholder="Filter by Year..." class="filter-input">
+            <select id="language-filter" class="filter-input">
+                <option value="">All Languages</option>
+                <option value="tamil">Tamil</option>
+                <option value="hindi">Hindi</option>
+                <option value="english">English</option>
+                <option value="telugu">Telugu</option>
+                <option value="malayalam">Malayalam</option>
+                <option value="kannada">Kannada</option>
+            </select>
+        </div>
+
+        <!-- Message Box for loading, errors, etc. -->
+        <div id="message-box" class="message-box hidden">
+            <div id="loading-spinner" class="loading-spinner hidden"></div>
+            <p id="message-text"></p>
+        </div>
+
+        <!-- Song Results Section -->
+        <div id="results-container" class="results-grid">
+            <!-- Results will be dynamically inserted here -->
+        </div>
+        
+        <!-- Song Detail Modal -->
+        <div id="song-detail-modal" class="modal-overlay">
+            <div class="modal-container">
+                <button id="modal-close" class="modal-close">&times;</button>
+                <div class="modal-body">
+                    <div class="modal-header">
+                        <div class="modal-hero">
+                            <div class="modal-cover">
+                                <img id="modal-song-image" src="" alt="">
+                            </div>
+                            <div>
+                                <h2 id="modal-song-title" class="modal-title"></h2>
+                                <p id="modal-song-artist" class="modal-artist"></p>
+                                <p id="modal-song-album" class="modal-album"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="song-detail-content" class="song-detail-content">
+                        <div id="song-detail-loading" class="song-detail-loading">
+                            <div class="loading-spinner"></div>
+                            <p>Fetching song details...</p>
+                        </div>
+                        
+                        <div id="song-detail-info" class="hidden"></div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <a id="modal-download-button" href="#" download="" class="secondary-btn">
+                            Download Song
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Player -->
+    <div id="audio-player" class="audio-player">
+        <div class="player-container">
+            <div class="player-left">
+                <div class="artwork-frame">
+                    <img id="player-song-image" class="player-song-image" src="https://placehold.co/500x500/0b0f14/e2e8f0?text=No+Song" alt="Song Cover">
+                    <span class="artwork-glow"></span>
+                </div>
+                <div class="player-song-info">
+                    <div id="player-song-title" class="player-song-title">No song selected</div>
+                    <div id="player-song-artist" class="player-song-artist">Select a song to play</div>
+                    <div class="player-meta-tags">
+                        <span id="player-quality" class="meta-tag">--</span>
+                        <span id="player-year" class="meta-tag">--</span>
+                        <span id="player-language" class="meta-tag">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-center">
+                <div class="player-controls">
+                    <button class="player-btn" id="prev-btn" title="Previous">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M4 4a.5.5 0 0 1 1 0v3.248l6.267-3.636c.54-.313 1.232.066 1.232.696v7.384c0 .63-.692 1.01-1.232.697L5 8.753V12a.5.5 0 0 1-1 0V4z"/>
+                    </svg>
+                </button>
+                <button class="player-btn play-pause" id="play-pause-btn" title="Play/Pause">
+                    <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" class="">
+                        <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                    </svg>
+                    <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" class="hidden">
+                        <path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/>
+                    </svg>
+                </button>
+                <button class="player-btn" id="next-btn" title="Next">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M12.5 4a.5.5 0 0 0-1 0v3.248L5.233 3.612C4.693 3.3 4 3.678 4 4.308v7.384c0 .63.692 1.01 1.233.697L11.5 8.753V12a.5.5 0 0 0 1 0V4z"/>
+                    </svg>
+                </button>
+            </div>
+
+                <div class="progress-row">
+                    <div class="player-time" id="current-time">0:00</div>
+                    <div class="progress-container" id="progress-container">
+                        <div class="progress-bar" id="progress-bar">
+                            <div class="progress-ball"></div>
+                        </div>
+                    </div>
+                    <div class="player-time" id="total-time">0:00</div>
+                </div>
+
+                <div class="player-advanced">
+                    <button class="player-btn subtle" id="shuffle-btn" title="Shuffle">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M12.5 1a.5.5 0 0 1 .5.5v1.25a.5.5 0 0 1-1 0V2h-1.25a.5.5 0 0 1 0-1H12.5z"/>
+                            <path d="M3 5.5a.5.5 0 0 1 .5-.5h1.086a.5.5 0 0 1 .36.153l2.09 2.2a.5.5 0 0 1-.725.69L4.38 6H3.5a.5.5 0 0 1-.5-.5z"/>
+                            <path d="M9.95 9.617a.5.5 0 0 1 .725 0l1.317 1.383H12v-.75a.5.5 0 0 1 1 0V11.5a.5.5 0 0 1-.5.5h-1.508a.5.5 0 0 1-.362-.155l-1.68-1.764a.5.5 0 0 1 0-.464z"/>
+                            <path d="M13 6.5a.5.5 0 0 1 .5.5v1.25a.5.5 0 0 1-1 0V7h-1.25a.5.5 0 0 1 0-1H13z"/>
+                            <path d="M3 10.5a.5.5 0 0 1 .5-.5h1.086a.5.5 0 0 1 .36.153l2.09 2.2a.5.5 0 0 1-.725.69L4.38 11H3.5a.5.5 0 0 1-.5-.5z"/>
+                        </svg>
+                    </button>
+                    <button class="player-btn subtle" id="repeat-btn" title="Repeat">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11 5.5a.5.5 0 0 0-.5-.5H5a3 3 0 0 0 0 6h1.5a.5.5 0 0 0 0-1H5a2 2 0 1 1 0-4h5.5a.5.5 0 0 0 .5-.5z"/>
+                            <path d="M15 8a3 3 0 0 1-3 3H6.5a.5.5 0 0 1 0-1H12a2 2 0 1 0 0-4H10.5a.5.5 0 0 1 0-1H12a3 3 0 0 1 3 3z"/>
+                        </svg>
+                        <span id="repeat-mode" class="repeat-label">Off</span>
+                    </button>
+                    <div class="speed-control">
+                        <label for="speed-select" class="speed-label">Speed</label>
+                        <select id="speed-select" class="speed-select">
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>1.0x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                        </select>
+                    </div>
+                    <button class="player-btn subtle" id="like-btn" title="Like">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 2.748-.717-.737C5.6.281 2.514 3.407 2.514 6.58c0 2.506 1.872 4.258 4.644 6.286l.842.61.842-.61c2.772-2.028 4.644-3.78 4.644-6.286 0-3.173-3.086-6.299-5.283-3.832z"/>
+                        </svg>
+                    </button>
+                    <div class="eq-visual" id="eq-visual" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-right">
+                <div class="volume-container">
+                    <button class="player-btn" id="volume-btn" title="Mute/Unmute">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" id="volume-high-icon">
+                        <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-.708.707A7.476 7.476 0 0 1 13.025 8c0 2.071-.84 3.946-2.197 5.303l.708.707z"/>
+                        <path d="M10.121 12.596A6.48 6.48 0 0 0 12.025 8a6.48 6.48 0 0 0-1.904-4.596l-.707.707A5.483 5.483 0 0 1 11.025 8a5.483 5.483 0 0 1-1.61 3.89l.706.706z"/>
+                        <path d="M8.707 11.182A4.486 4.486 0 0 0 10.025 8a4.486 4.486 0 0 0-1.318-3.182L8 5.525A3.489 3.489 0 0 1 9.025 8 3.49 3.49 0 0 1 8 10.475l.707.707zM6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="hidden" id="volume-mute-icon">
+                        <path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A.5.5 0 0 1 1 10V6a.5.5 0 0 1 .5-.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06zm7.137 2.096a.5.5 0 0 1 0 .708L12.207 8l1.647 1.646a.5.5 0 0 1-.708.708L11.5 8.707l-1.646 1.647a.5.5 0 0 1-.708-.708L10.793 8 9.146 6.354a.5.5 0 0 1 .708-.708L11.5 7.293l1.646-1.647a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                </button>
+                    <div class="volume-slider" id="volume-slider">
+                        <div class="volume-progress" id="volume-progress"></div>
+                    </div>
+                </div>
+                
+                <div class="playlist-icon">
+                    <button class="player-btn" id="playlist-btn" title="Playlist">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                    <div class="playlist-badge" id="playlist-count">0</div>
+                </button>
+                <div class="playlist-dropdown" id="playlist-dropdown">
+                    <div class="playlist-header">
+                        <div class="playlist-header__left">
+                            <select id="playlist-select" class="playlist-select">
+                                <option value="default">My Playlist</option>
+                            </select>
+                            <button id="new-playlist-btn" class="playlist-mini-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="playlist-header__right">
+                            <button id="save-playlist-btn" class="playlist-mini-btn">Save</button>
+                            <button id="clear-playlist-btn" class="playlist-mini-btn danger">Clear</button>
+                        </div>
+                    </div>
+                    <div id="playlist-items" class="playlist-items">
+                        <!-- Playlist items will be added dynamically -->
+                    </div>
+                    <div class="playlist-footer">
+                        <a href="playlist.html" class="secondary-btn">
+                            Manage All Playlists
+                        </a>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hidden audio element for playback -->
+        <audio id="audio-element" preload="metadata"></audio>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
