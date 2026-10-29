@@ -76,10 +76,22 @@ export const AudioPlayer: React.FC = () => {
   };
 
   return (
-    <footer className="h-20 sm:h-[88px] bg-[#181818] border-t border-[#282828] px-4 flex items-center justify-between text-white z-40 select-none relative">
+    <footer className="h-16 md:h-20 sm:md:h-[88px] bg-[#181818] border-t border-[#282828] px-3 sm:px-4 flex items-center justify-between text-white z-40 select-none relative">
+      {/* MOBILE PROGRESS BAR (Slim top scrubber on mobile screens) */}
+      <div 
+        ref={progressBarRef}
+        onClick={handleProgressClick}
+        className="md:hidden absolute top-0 left-0 right-0 h-1 bg-[#282828] cursor-pointer group"
+      >
+        <div 
+          className="h-full bg-[#1ed760] transition-all"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+
       {/* LEFT: Currently Playing Track Info */}
-      <div className="flex items-center gap-3 w-1/4 min-w-[180px] max-w-[320px]">
-        <div className="relative group w-14 h-14 rounded overflow-hidden flex-shrink-0 bg-neutral-900 shadow">
+      <div className="flex items-center gap-2.5 sm:gap-3 flex-1 md:flex-initial md:w-1/4 md:min-w-[180px] md:max-w-[320px] min-w-0 mr-2">
+        <div className="relative group w-11 h-11 sm:w-14 sm:h-14 rounded overflow-hidden flex-shrink-0 bg-neutral-900 shadow">
           <img
             src={imageUrl}
             alt={title}
@@ -87,19 +99,19 @@ export const AudioPlayer: React.FC = () => {
           />
           {isLoadingSong && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-              <Loader2 className="animate-spin text-[#1ed760]" size={20} />
+              <Loader2 className="animate-spin text-[#1ed760]" size={18} />
             </div>
           )}
         </div>
 
-        <div className="overflow-hidden min-w-0 pr-1">
+        <div className="overflow-hidden min-w-0 pr-1 flex-1">
           <p 
             onClick={() => {
               if (typeof currentSong.album === 'object' && currentSong.album?.id) {
                 navigateAlbum(currentSong.album.id);
               }
             }}
-            className="text-sm font-semibold text-white truncate hover:underline cursor-pointer"
+            className="text-xs sm:text-sm font-semibold text-white truncate hover:underline cursor-pointer"
             title={title}
           >
             {title}
@@ -109,7 +121,7 @@ export const AudioPlayer: React.FC = () => {
               const primary = currentSong.artists?.primary?.[0];
               if (primary?.id) navigateArtist(primary.id);
             }}
-            className="text-xs text-neutral-400 truncate hover:text-white hover:underline cursor-pointer transition"
+            className="text-[10px] sm:text-xs text-neutral-400 truncate hover:text-white hover:underline cursor-pointer transition"
             title={artists}
           >
             {artists}
@@ -127,8 +139,41 @@ export const AudioPlayer: React.FC = () => {
         </button>
       </div>
 
-      {/* CENTER: Playback Controls & Dynamic Seekbar */}
-      <div className="flex flex-col items-center max-w-[722px] w-2/4 px-2">
+      {/* MOBILE CONTROLS (Rendered compactly on small screens) */}
+      <div className="flex md:hidden items-center gap-2 flex-shrink-0">
+        <button
+          onClick={previousTrack}
+          className="text-neutral-400 hover:text-white transition active:scale-95 p-1"
+          title="Previous track"
+        >
+          <SkipBack size={18} fill="currentColor" />
+        </button>
+
+        <button
+          onClick={togglePlayPause}
+          className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-md"
+          title={isPlaying ? 'Pause' : 'Play'}
+        >
+          {isLoadingSong ? (
+            <Loader2 className="animate-spin text-black" size={16} />
+          ) : isPlaying ? (
+            <Pause size={16} fill="black" />
+          ) : (
+            <Play size={16} fill="black" className="ml-0.5" />
+          )}
+        </button>
+
+        <button
+          onClick={nextTrack}
+          className="text-neutral-400 hover:text-white transition active:scale-95 p-1"
+          title="Next track"
+        >
+          <SkipForward size={18} fill="currentColor" />
+        </button>
+      </div>
+
+      {/* DESKTOP CENTER: Playback Controls & Dynamic Seekbar */}
+      <div className="hidden md:flex flex-col items-center max-w-[722px] w-2/4 px-2">
         {/* Buttons Row */}
         <div className="flex items-center gap-4 sm:gap-6 mb-1.5">
           {/* Shuffle */}
@@ -198,7 +243,6 @@ export const AudioPlayer: React.FC = () => {
           <span className="w-9 text-right">{formatDuration(currentTime)}</span>
 
           <div
-            ref={progressBarRef}
             onClick={handleProgressClick}
             onMouseEnter={() => setIsHoveringProgress(true)}
             onMouseLeave={() => setIsHoveringProgress(false)}
