@@ -85,7 +85,7 @@ export const SongRow: React.FC<SongRowProps> = ({
     if (isCurrent) {
       togglePlayPause();
     } else {
-      playSong(song, contextQueue);
+      playSong(song, contextQueue, index);
       addToRecentlyPlayed(song);
     }
   };

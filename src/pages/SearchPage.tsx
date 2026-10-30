@@ -183,7 +183,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
                 <div 
                   onClick={() => {
                     if (currentSong?.id === topSong.id) togglePlayPause();
-                    else playSong(topSong, songResults);
+                    else playSong(topSong, songResults, 0);
                   }}
                   className="group relative flex-1 bg-[#181818] hover:bg-[#282828] p-5 rounded-lg transition duration-300 cursor-pointer flex flex-col justify-between shadow-lg"
                 >

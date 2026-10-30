@@ -33,6 +33,10 @@ interface LibraryContextType {
   openLanguageModal: () => void;
   closeLanguageModal: () => void;
   updateLanguagePreferences: (languages: string[]) => void;
+
+  // 2-Day Autoplay Unique Registry
+  twoDayPlayedCount: number;
+  resetTwoDayPlayedHistory: () => void;
 }
 
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
@@ -264,6 +268,27 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const openLanguageModal = () => setIsLanguageModalOpen(true);
   const closeLanguageModal = () => setIsLanguageModalOpen(false);
 
+  // 2-Day Autoplay Unique Registry State
+  const [twoDayPlayedCount, setTwoDayPlayedCount] = useState<number>(() => {
+    return recommendationEngine.getPlayedTracksCount();
+  });
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setTwoDayPlayedCount(recommendationEngine.getPlayedTracksCount());
+    };
+
+    window.addEventListener('spotify:played-tracks-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('spotify:played-tracks-updated', handleUpdate);
+    };
+  }, []);
+
+  const resetTwoDayPlayedHistory = () => {
+    recommendationEngine.resetPlayedTracks();
+    setTwoDayPlayedCount(0);
+  };
+
   const updateLanguagePreferences = (languages: string[]) => {
     recommendationEngine.saveLanguagePreferences(languages);
     setLanguagePreferences(languages);
@@ -280,6 +305,8 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
         profileVectors,
         languagePreferences,
         isLanguageModalOpen,
+        twoDayPlayedCount,
+        resetTwoDayPlayedHistory,
         createPlaylist,
         updatePlaylist,
         deletePlaylist,

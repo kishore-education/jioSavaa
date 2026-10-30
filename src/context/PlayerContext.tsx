@@ -86,6 +86,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const logTrackPlaybackRef = useRef(logTrackPlayback);
   const playbackHistoryRef = useRef(playbackHistory);
   const isAutoPlayingRef = useRef<boolean>(false);
+  const isHandlingEndedRef = useRef<boolean>(false);
+
+  const nextTrackRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const previousTrackRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const togglePlayPauseRef = useRef<() => void>(() => {});
+  const seekToRef = useRef<(time: number) => void>(() => {});
 
   // Keep references synchronized
   useEffect(() => {
@@ -129,6 +135,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const playSong = async (song: Song, contextQueue?: Song[], explicitIndex?: number) => {
     if (!audioRef.current) return;
 
+    isHandlingEndedRef.current = false;
     hasLoggedCurrentTrackRef.current = false;
     setIsLoadingSong(true);
 
@@ -139,7 +146,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         console.warn(`Audio preview unavailable for "${resolvedSong.name || resolvedSong.title}". Skipping to next.`);
         setIsLoadingSong(false);
         // Automatically attempt next track
-        nextTrack();
+        nextTrackRef.current();
         return;
       }
 
@@ -151,8 +158,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         newQueue = deduplicateSongs(contextQueue);
         newOriginal = newQueue;
       } else if (queueRef.current.length > 0 && queueRef.current.some((s) => s.id === resolvedSong.id)) {
-        newQueue = deduplicateSongs(queueRef.current);
-        newOriginal = originalQueueRef.current;
+        newQueue = queueRef.current;
+        newOriginal = originalQueueRef.current.length > 0 ? originalQueueRef.current : newQueue;
       } else {
         newQueue = deduplicateSongs([resolvedSong, ...queueRef.current]);
         newOriginal = deduplicateSongs([resolvedSong, ...originalQueueRef.current]);
@@ -180,6 +187,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setQueueIndex(newIndex);
 
       // AUDIO PLAYBACK
+      audioRef.current.pause();
       audioRef.current.src = audioUrl;
       audioRef.current.currentTime = 0;
       await audioRef.current.play();
@@ -201,7 +209,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const currentQ = queueRef.current;
     if (index >= 0 && index < currentQ.length) {
       const target = currentQ[index];
-      await playSong(target, currentQ, index);
+      await playSong(target, undefined, index);
     }
   };
 
@@ -243,7 +251,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   /**
    * Next Track action
-   * Plays the next unplayed track in queue or triggers intelligent recommendation algorithm to search & fetch new songs
+   * Advances sequentially through the active playlist / album / queue.
+   * When the active queue is exhausted, triggers the 2-day unique autoplay recommendation engine.
    */
   const nextTrack = useCallback(async () => {
     if (repeatModeRef.current === 'one' && audioRef.current) {
@@ -256,38 +265,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const currentIndex = queueIndexRef.current;
     const nextIndex = currentIndex + 1;
 
-    // 1. Scan forward in current queue for the first unplayed, non-similar track
-    let targetIndex = -1;
-    for (let i = nextIndex; i < currentQ.length; i++) {
-      const candidate = currentQ[i];
-      if (!recommendationEngine.isAlreadyPlayedOrSimilar(candidate, playbackHistoryRef.current, currentSongRef.current || undefined)) {
-        targetIndex = i;
-        break;
-      }
-    }
-
-    if (targetIndex !== -1) {
-      await playQueueAtIndex(targetIndex);
+    // 1. If there are still songs remaining in the current playlist / queue, ALWAYS play the next song in the playlist!
+    if (nextIndex < currentQ.length) {
+      await playQueueAtIndex(nextIndex);
       return;
     }
 
-    // 2. If loop queue is on, check if any earlier tracks in currentQ are unplayed
+    // 2. If loop queue is on ('all') and queue has tracks, loop back to the first song of the playlist
     if (repeatModeRef.current === 'all' && currentQ.length > 0) {
-      let loopIndex = -1;
-      for (let i = 0; i < currentQ.length; i++) {
-        const candidate = currentQ[i];
-        if (!recommendationEngine.isAlreadyPlayedOrSimilar(candidate, playbackHistoryRef.current, currentSongRef.current || undefined)) {
-          loopIndex = i;
-          break;
-        }
-      }
-      if (loopIndex !== -1) {
-        await playQueueAtIndex(loopIndex);
-        return;
-      }
+      await playQueueAtIndex(0);
+      return;
     }
 
-    // 3. Queue has no unplayed fresh tracks left -> Search API and auto-play a brand new song!
+    // 3. Active playlist has finished! Autoplay begins dynamically: discovers & plays a brand-new unique song not played in the last 2 days.
     await triggerAutoplayRecommendation();
   }, [triggerAutoplayRecommendation]);
 
@@ -317,12 +307,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const handleTimeUpdate = () => {
       if (!audioRef.current) return;
       const cur = audioRef.current.currentTime;
+      const dur = audioRef.current.duration;
       setCurrentTime(cur);
 
       // Log to history once played for > 30 seconds
       if (cur >= 30 && !hasLoggedCurrentTrackRef.current && currentSongRef.current) {
         logTrackPlaybackRef.current(currentSongRef.current);
         hasLoggedCurrentTrackRef.current = true;
+      }
+
+      // Safeguard: auto-play next song if audio has completed or reached the end (within 0.25s)
+      if (dur > 2 && cur >= dur - 0.25 && !isHandlingEndedRef.current) {
+        handleEnded();
       }
     };
 
@@ -334,12 +330,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Auto-play next song on ended
     const handleEnded = () => {
+      if (isHandlingEndedRef.current) return;
+      isHandlingEndedRef.current = true;
+
       if (!hasLoggedCurrentTrackRef.current && currentSongRef.current) {
         logTrackPlaybackRef.current(currentSongRef.current);
         hasLoggedCurrentTrackRef.current = true;
       }
 
-      nextTrack();
+      nextTrackRef.current().finally(() => {
+        setTimeout(() => {
+          isHandlingEndedRef.current = false;
+        }, 500);
+      });
     };
 
     const handleWaiting = () => {
@@ -380,7 +383,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       audio.pause();
       audio.src = '';
     };
-  }, [nextTrack]);
+  }, []); // Run ONCE on mount so audio element is persistent and never destroyed
 
   // Volume synchronization
   useEffect(() => {
@@ -485,12 +488,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setOriginalQueue(originalQueueRef.current);
   };
 
-  // Mutable function references for Media Session API (Bluetooth headphone / Hardware controls)
-  const nextTrackRef = useRef(nextTrack);
-  const previousTrackRef = useRef(previousTrack);
-  const togglePlayPauseRef = useRef(togglePlayPause);
-  const seekToRef = useRef(seekTo);
-
+  // Keep references synced for Media Session API & audio event listeners
   useEffect(() => {
     nextTrackRef.current = nextTrack;
   }, [nextTrack]);

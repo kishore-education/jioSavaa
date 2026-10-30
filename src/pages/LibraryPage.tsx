@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import { useLibrary } from '../context/LibraryContext';
 import { useNavigation } from '../context/NavigationContext';
-import { Plus, Heart, Music, Trash2, Edit2, Play } from 'lucide-react';
+import { Plus, Heart, Music, Trash2, Edit2, Play, Sparkles, RotateCcw } from 'lucide-react';
 import { getBestImageUrl } from '../utils/formatters';
 import { EditPlaylistModal } from '../components/common/EditPlaylistModal';
 import { Playlist } from '../types';
 
 export const LibraryPage: React.FC = () => {
-  const { customPlaylists, likedSongs, createPlaylist, deletePlaylist } = useLibrary();
+  const { 
+    customPlaylists, 
+    likedSongs, 
+    createPlaylist, 
+    deletePlaylist,
+    twoDayPlayedCount,
+    resetTwoDayPlayedHistory
+  } = useLibrary();
   const { navigatePlaylist, navigateLikedSongs } = useNavigation();
 
   const [activeFilter, setActiveFilter] = useState<'all' | 'playlists' | 'liked'>('all');
@@ -71,6 +78,42 @@ export const LibraryPage: React.FC = () => {
           <Plus size={18} strokeWidth={2.5} />
           Create playlist
         </button>
+      </div>
+
+      {/* 2-Day Unique Autoplay Tracker Banner */}
+      <div className="bg-gradient-to-r from-emerald-950/40 via-[#181818] to-[#181818] border border-emerald-500/25 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#1ed760]/10 border border-[#1ed760]/30 flex items-center justify-center text-[#1ed760] flex-shrink-0">
+            <Sparkles size={20} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-bold text-white">
+                2-Day Unique Autoplay Engine
+              </h3>
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-[#1ed760] font-mono font-bold">
+                {twoDayPlayedCount} {twoDayPlayedCount === 1 ? 'song' : 'songs'} logged
+              </span>
+            </div>
+            <p className="text-xs text-neutral-400 mt-0.5">
+              Every played song is recorded and strictly excluded from Autoplay for 48 hours to guarantee unique songs. Resets automatically after 2 days.
+            </p>
+          </div>
+        </div>
+
+        {twoDayPlayedCount > 0 && (
+          <button
+            onClick={() => {
+              if (confirm('Reset the 2-day played songs registry now? All previously played tracks will become eligible for Autoplay again.')) {
+                resetTwoDayPlayedHistory();
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-800 hover:bg-neutral-700 text-xs text-neutral-300 hover:text-white font-semibold transition self-start sm:self-center flex-shrink-0 border border-neutral-700/60"
+          >
+            <RotateCcw size={13} />
+            <span>Reset 2-day history</span>
+          </button>
+        )}
       </div>
 
       {/* Grid of collections */}

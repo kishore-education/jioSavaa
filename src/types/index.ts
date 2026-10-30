@@ -149,6 +149,16 @@ export interface SearchAllData {
 
 export type RepeatMode = 'off' | 'all' | 'one';
 
+export interface PlayedTrackRecord {
+  id: string;
+  title: string;
+  normalizedTitle: string;
+  artist: string;
+  timestamp: number; // Unix epoch ms
+  language?: string;
+  genre?: string;
+}
+
 export interface PlaybackHistoryItem {
   id: string;
   genre: string;

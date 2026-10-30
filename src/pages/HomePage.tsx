@@ -91,7 +91,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenAddToPlaylist }) => {
 
   const handlePlayDailyMix = (mix: DailyMix) => {
     if (mix.songs && mix.songs.length > 0) {
-      playSong(mix.songs[0], mix.songs);
+      playSong(mix.songs[0], mix.songs, 0);
     }
   };
 
@@ -118,7 +118,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenAddToPlaylist }) => {
         {/* Quick Access 6-item Grid */}
         {quickItems.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {quickItems.map((song) => {
+            {quickItems.map((song, idx) => {
               const isCurrent = currentSong?.id === song.id;
               const isRowPlaying = isCurrent && isPlaying;
               const title = decodeHtmlEntities(song.name || song.title || 'Song');
@@ -129,7 +129,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenAddToPlaylist }) => {
                   key={song.id}
                   onClick={() => {
                     if (isCurrent) togglePlayPause();
-                    else playSong(song, quickItems);
+                    else playSong(song, quickItems, idx);
                   }}
                   className="group flex items-center bg-[#242424]/80 hover:bg-[#2c2c2c] rounded-md overflow-hidden cursor-pointer transition duration-300 relative shadow-md"
                 >

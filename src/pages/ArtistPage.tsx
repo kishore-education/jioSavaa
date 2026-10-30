@@ -89,7 +89,7 @@ export const ArtistPage: React.FC<ArtistPageProps> = ({ id, onOpenAddToPlaylist 
     if (isArtistActive) {
       togglePlayPause();
     } else {
-      playSong(topSongs[0], topSongs);
+      playSong(topSongs[0], topSongs, 0);
     }
   };
 

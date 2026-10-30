@@ -39,14 +39,14 @@ export const LikedSongsPage: React.FC<LikedSongsPageProps> = ({ onOpenAddToPlayl
     if (isLikedActive) {
       togglePlayPause();
     } else {
-      playSong(likedSongs[0], likedSongs);
+      playSong(likedSongs[0], likedSongs, 0);
     }
   };
 
   const handleShufflePlay = () => {
     if (likedSongs.length === 0) return;
     const randomIdx = Math.floor(Math.random() * likedSongs.length);
-    playSong(likedSongs[randomIdx], likedSongs);
+    playSong(likedSongs[randomIdx], likedSongs, randomIdx);
     toggleShuffle();
   };
 

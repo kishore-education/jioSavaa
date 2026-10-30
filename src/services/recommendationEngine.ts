@@ -1,49 +1,84 @@
-import { DailyMix, PlaybackHistoryItem, ProfileVectors, Song } from '../types';
+import { DailyMix, PlaybackHistoryItem, PlayedTrackRecord, ProfileVectors, Song } from '../types';
 import { decodeHtmlEntities, getArtistNames } from '../utils/formatters';
 import { isSimilarSongTitle, normalizeText, deduplicateSongs } from '../utils/sanitizer';
 import { musicApi } from './api';
 
 const HISTORY_STORAGE_KEY = 'spotify_clone_playback_history';
 const LANGUAGE_PREF_KEY = 'spotify_clone_language_preferences';
+const TWO_DAYS_PLAYED_KEY = 'spotify_clone_two_days_played_tracks_v2';
 const SESSION_PLAYED_IDS_KEY = 'spotify_clone_played_session_ids';
 const SESSION_PLAYED_TITLES_KEY = 'spotify_clone_played_session_titles';
 const MAX_HISTORY_ITEMS = 50;
 
-// Permanent session tracking so ANY song played once (even skipped immediately) is never repeated
-const sessionPlayedIds = new Set<string>();
-const sessionPlayedTitles = new Set<string>();
+// 2 Days in milliseconds: 2 * 24 * 60 * 60 * 1000 = 172,800,000 ms
+export const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 
-// Bootstrap session played tracker from localStorage immediately
+// In-memory 2-day played registry map: song.id -> PlayedTrackRecord
+const playedTrackRecords = new Map<string, PlayedTrackRecord>();
+
+/**
+ * Prunes records older than 2 days (48 hours)
+ */
+function pruneExpiredPlayedTracks(): PlayedTrackRecord[] {
+  const now = Date.now();
+  let hasChanges = false;
+  for (const [id, record] of playedTrackRecords.entries()) {
+    if (typeof record.timestamp !== 'number' || (now - record.timestamp) >= TWO_DAYS_MS) {
+      playedTrackRecords.delete(id);
+      hasChanges = true;
+    }
+  }
+
+  const active = Array.from(playedTrackRecords.values());
+  if (hasChanges) {
+    try {
+      localStorage.setItem(TWO_DAYS_PLAYED_KEY, JSON.stringify(active));
+    } catch (e) {
+      // Ignore quota errors
+    }
+  }
+  return active;
+}
+
+// Bootstrap 2-day played registry on module load
 try {
-  const storedIds = localStorage.getItem(SESSION_PLAYED_IDS_KEY);
-  if (storedIds) {
-    const parsed = JSON.parse(storedIds);
+  const stored = localStorage.getItem(TWO_DAYS_PLAYED_KEY);
+  if (stored) {
+    const parsed = JSON.parse(stored);
     if (Array.isArray(parsed)) {
-      parsed.forEach((id: string) => sessionPlayedIds.add(id));
-    }
-  }
-
-  const storedTitles = localStorage.getItem(SESSION_PLAYED_TITLES_KEY);
-  if (storedTitles) {
-    const parsed = JSON.parse(storedTitles);
-    if (Array.isArray(parsed)) {
-      parsed.forEach((title: string) => sessionPlayedTitles.add(title));
-    }
-  }
-
-  const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
-  if (storedHistory) {
-    const parsed = JSON.parse(storedHistory);
-    if (Array.isArray(parsed)) {
-      parsed.forEach((item: PlaybackHistoryItem) => {
-        if (item.id) sessionPlayedIds.add(item.id);
-        const norm = normalizeText(item.title);
-        if (norm) sessionPlayedTitles.add(norm);
+      parsed.forEach((item: PlayedTrackRecord) => {
+        if (item && item.id && item.timestamp) {
+          playedTrackRecords.set(item.id, item);
+        }
       });
     }
+  } else {
+    // Migration: populate from history and session played if existing
+    const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (storedHistory) {
+      const parsed = JSON.parse(storedHistory);
+      if (Array.isArray(parsed)) {
+        parsed.forEach((item: PlaybackHistoryItem) => {
+          if (item?.id) {
+            playedTrackRecords.set(item.id, {
+              id: item.id,
+              title: item.title,
+              normalizedTitle: normalizeText(item.title),
+              artist: item.artistName || '',
+              timestamp: item.timestamp || Date.now(),
+              language: item.language,
+              genre: item.genre,
+            });
+          }
+        });
+      }
+    }
   }
+
+  // Prune any records older than 2 days immediately
+  pruneExpiredPlayedTracks();
 } catch (e) {
-  console.warn('Session tracker bootstrap warning:', e);
+  console.warn('2-day played tracker bootstrap warning:', e);
 }
 
 /**
@@ -340,60 +375,125 @@ export const recommendationEngine = {
   },
 
   /**
-   * Tracks songs played during the current user session so that
-   * NO played song or similar version can ever be selected again by autoplay.
+   * Retrieves the list of songs played within the last 2 days (48 hours), automatically pruned
    */
-  recordSessionPlay(song: Song) {
-    if (!song || !song.id) return;
-    sessionPlayedIds.add(song.id);
-    const norm = normalizeText(song.name || song.title);
-    if (norm) {
-      sessionPlayedTitles.add(norm);
-    }
+  getTwoDaysPlayedRegistry(): PlayedTrackRecord[] {
+    return pruneExpiredPlayedTracks();
+  },
 
+  /**
+   * Returns count of unique songs played within the last 2 days
+   */
+  getPlayedTracksCount(): number {
+    return pruneExpiredPlayedTracks().length;
+  },
+
+  /**
+   * Resets the 2-day played history so all songs become eligible again
+   */
+  resetPlayedTracks(): void {
+    playedTrackRecords.clear();
     try {
-      localStorage.setItem(SESSION_PLAYED_IDS_KEY, JSON.stringify(Array.from(sessionPlayedIds)));
-      localStorage.setItem(SESSION_PLAYED_TITLES_KEY, JSON.stringify(Array.from(sessionPlayedTitles)));
+      localStorage.removeItem(TWO_DAYS_PLAYED_KEY);
+      localStorage.removeItem(SESSION_PLAYED_IDS_KEY);
+      localStorage.removeItem(SESSION_PLAYED_TITLES_KEY);
     } catch (e) {
-      // Ignore quota errors if storage is full
+      // Ignore
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('spotify:played-tracks-updated'));
     }
   },
 
   /**
-   * Evaluates if a song has already been played once or is similar to a previously played song
+   * Checks if a candidate track was played within the last 2 days, or is similar to one
    */
-  isAlreadyPlayedOrSimilar(candidate: Song, history: PlaybackHistoryItem[], seedSong?: Song): boolean {
+  isPlayedInLastTwoDays(candidate: Song | { id: string; title?: string; name?: string }, seedSong?: Song): boolean {
     if (!candidate || !candidate.id) return true;
 
     // Check seed identity
     if (seedSong && candidate.id === seedSong.id) return true;
 
-    // Check exact ID in session or persistent history
-    if (sessionPlayedIds.has(candidate.id)) return true;
-    if (history.some((h) => h.id === candidate.id)) return true;
+    // Ensure expired records are purged
+    pruneExpiredPlayedTracks();
+
+    // 1. Direct ID match in active 2-day registry
+    if (playedTrackRecords.has(candidate.id)) return true;
 
     const candTitle = candidate.name || candidate.title || '';
     const normCand = normalizeText(candTitle);
 
-    // Check title in session titles
-    if (normCand && sessionPlayedTitles.has(normCand)) return true;
-
-    // Check similarity with seed song
+    // 2. Check similarity with seed song
     if (seedSong && isSimilarSongTitle(candTitle, seedSong.name || seedSong.title)) {
       return true;
     }
 
-    // Check similarity with any track in history
-    for (const h of history) {
-      if (isSimilarSongTitle(candTitle, h.title)) {
+    // 3. Check normalized title and fuzzy similarity across all 2-day active records
+    for (const record of playedTrackRecords.values()) {
+      if (normCand && record.normalizedTitle === normCand) {
+        return true;
+      }
+      if (isSimilarSongTitle(candTitle, record.title)) {
         return true;
       }
     }
 
-    // Check similarity with any track in sessionPlayedTitles
-    for (const title of sessionPlayedTitles) {
-      if (isSimilarSongTitle(normCand, title)) {
-        return true;
+    return false;
+  },
+
+  /**
+   * Records a song as played with a 2-day (48-hour) expiration timestamp
+   */
+  recordPlayedTrack(song: Song): void {
+    if (!song || !song.id) return;
+
+    pruneExpiredPlayedTracks();
+
+    const title = decodeHtmlEntities(song.name || song.title || 'Unknown Track');
+    const record: PlayedTrackRecord = {
+      id: song.id,
+      title,
+      normalizedTitle: normalizeText(title),
+      artist: getArtistNames(song),
+      timestamp: Date.now(),
+      language: song.language,
+      genre: inferSongGenre(song),
+    };
+
+    playedTrackRecords.set(song.id, record);
+
+    try {
+      localStorage.setItem(TWO_DAYS_PLAYED_KEY, JSON.stringify(Array.from(playedTrackRecords.values())));
+    } catch (e) {
+      // Ignore quota errors
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('spotify:played-tracks-updated'));
+    }
+  },
+
+  /**
+   * Session tracking alias: delegates to 2-day persistent tracking
+   */
+  recordSessionPlay(song: Song): void {
+    this.recordPlayedTrack(song);
+  },
+
+  /**
+   * Evaluates if a song has already been played in the 2-day window or is similar to a recent track
+   */
+  isAlreadyPlayedOrSimilar(candidate: Song, history: PlaybackHistoryItem[], seedSong?: Song): boolean {
+    if (this.isPlayedInLastTwoDays(candidate, seedSong)) {
+      return true;
+    }
+
+    if (history && history.length > 0) {
+      const candTitle = candidate.name || candidate.title || '';
+      for (const h of history) {
+        if (h.id === candidate.id || isSimilarSongTitle(candTitle, h.title)) {
+          return true;
+        }
       }
     }
 
@@ -403,7 +503,7 @@ export const recommendationEngine = {
   /**
    * SECTION 6D: Artist-Isolated Endless Similarity Radio
    * Selects structurally matching tracks from DIFFERENT artists using a randomized mix controller.
-   * Strictly enforces: DO NOT replay any song played once, DO NOT play same/similar song,
+   * Strictly enforces: DO NOT replay any song played within 2 days, DO NOT play same/similar song,
    * search and fetch completely fresh new songs from the API.
    */
   async selectNextSong(
@@ -412,7 +512,7 @@ export const recommendationEngine = {
     history: PlaybackHistoryItem[]
   ): Promise<Song | null> {
     // Register seed song as played
-    this.recordSessionPlay(seedSong);
+    this.recordPlayedTrack(seedSong);
 
     const seedGenre = inferSongGenre(seedSong);
     const seedArtist = extractArtistMetadata(seedSong);
@@ -439,9 +539,9 @@ export const recommendationEngine = {
       return false;
     };
 
-    // Filter candidate pool: MUST NOT be played once, MUST NOT be similar, MUST NOT be same artist
+    // Filter candidate pool: MUST NOT be played in the last 2 days, MUST NOT be similar, MUST NOT be same artist
     let freshPool: Song[] = candidatePool.filter(
-      (s) => s.id && !this.isAlreadyPlayedOrSimilar(s, history, seedSong) && !isSameArtist(s)
+      (s) => s.id && !this.isPlayedInLastTwoDays(s, seedSong) && !isSameArtist(s)
     );
 
     const langPrefs = this.getLanguagePreferences();
@@ -473,11 +573,11 @@ export const recommendationEngine = {
 
         const deduplicatedFetched = deduplicateSongs(fetchedRaw);
 
-        // Strictly filter fetched candidates: never played, not similar, not same artist
+        // Strictly filter fetched candidates: never played in 2 days, not similar, not same artist
         for (const cand of deduplicatedFetched) {
           if (
             cand.id &&
-            !this.isAlreadyPlayedOrSimilar(cand, history, seedSong) &&
+            !this.isPlayedInLastTwoDays(cand, seedSong) &&
             !isSameArtist(cand) &&
             !freshPool.some((p) => p.id === cand.id)
           ) {
@@ -514,7 +614,7 @@ export const recommendationEngine = {
         for (const cand of dedupedFallback) {
           if (
             cand.id &&
-            !this.isAlreadyPlayedOrSimilar(cand, history, seedSong) &&
+            !this.isPlayedInLastTwoDays(cand, seedSong) &&
             !isSameArtist(cand) &&
             !freshPool.some((p) => p.id === cand.id)
           ) {
@@ -536,7 +636,7 @@ export const recommendationEngine = {
         for (const cand of dedupedDeep) {
           if (
             cand.id &&
-            !this.isAlreadyPlayedOrSimilar(cand, history, seedSong) &&
+            !this.isPlayedInLastTwoDays(cand, seedSong) &&
             !isSameArtist(cand) &&
             !freshPool.some((p) => p.id === cand.id)
           ) {

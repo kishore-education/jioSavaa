@@ -1,6 +1,7 @@
 import React from 'react';
 import { usePlayer } from '../../context/PlayerContext';
-import { X, Play, Music } from 'lucide-react';
+import { useLibrary } from '../../context/LibraryContext';
+import { X, Play, Music, Sparkles, RotateCcw } from 'lucide-react';
 import { decodeHtmlEntities, formatDuration, getArtistNames, getBestImageUrl } from '../../utils/formatters';
 
 export const QueueModal: React.FC = () => {
@@ -12,6 +13,7 @@ export const QueueModal: React.FC = () => {
     queueIndex, 
     playQueueAtIndex 
   } = usePlayer();
+  const { twoDayPlayedCount, resetTwoDayPlayedHistory } = useLibrary();
 
   if (!isQueueOpen) return null;
 
@@ -61,6 +63,33 @@ export const QueueModal: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* 2-Day Unique Autoplay Tracker Banner */}
+        <div className="p-3 bg-gradient-to-r from-emerald-950/50 via-neutral-900 to-[#181818] rounded-xl border border-emerald-500/30 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[#1ed760]">
+              <Sparkles size={14} />
+              <span>2-Day Unique Autoplay</span>
+            </div>
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono font-bold">
+              {twoDayPlayedCount} {twoDayPlayedCount === 1 ? 'song' : 'songs'} logged
+            </span>
+          </div>
+          <p className="text-[11px] text-neutral-300 leading-snug">
+            All played songs are saved and strictly excluded from autoplay so you only hear unique songs. Automatically resets after 2 days (48h).
+          </p>
+          {twoDayPlayedCount > 0 && (
+            <div className="flex justify-end pt-1">
+              <button
+                onClick={resetTwoDayPlayedHistory}
+                className="text-[11px] text-neutral-400 hover:text-white hover:underline transition flex items-center gap-1"
+              >
+                <RotateCcw size={11} />
+                <span>Reset 2-day list now</span>
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Next in Queue */}
         <div>

@@ -90,14 +90,14 @@ export const AlbumPage: React.FC<AlbumPageProps> = ({ id, onOpenAddToPlaylist })
     if (isAlbumActive) {
       togglePlayPause();
     } else {
-      playSong(songs[0], songs);
+      playSong(songs[0], songs, 0);
     }
   };
 
   const handleShufflePlay = () => {
     if (songs.length === 0) return;
     const randomIdx = Math.floor(Math.random() * songs.length);
-    playSong(songs[randomIdx], songs);
+    playSong(songs[randomIdx], songs, randomIdx);
     toggleShuffle();
   };
 

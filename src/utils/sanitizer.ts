@@ -36,28 +36,24 @@ export function isSimilarSongTitle(titleA?: string, titleB?: string): boolean {
   const wordsB = normB.split(' ').filter((w) => w.length > 0);
   if (wordsA.length === 0 || wordsB.length === 0) return false;
 
-  // Check if one set of words is entirely contained in the other
-  const isSubset = (smaller: string[], larger: string[]) => {
-    return smaller.every((w) => larger.includes(w));
-  };
-
-  if (wordsA.length <= wordsB.length && isSubset(wordsA, wordsB)) {
-    return true;
-  }
-  if (wordsB.length < wordsA.length && isSubset(wordsB, wordsA)) {
-    return true;
-  }
-
-  // Check matching root words and significant token overlap for multi-word titles
-  const commonWords = wordsA.filter((w) => wordsB.includes(w) && w.length > 2);
   const minWords = Math.min(wordsA.length, wordsB.length);
-  if (minWords >= 2 && commonWords.length >= Math.ceil(minWords * 0.75)) {
-    return true;
+  const maxWords = Math.max(wordsA.length, wordsB.length);
+
+  // Check if one title is a substantial subset/prefix of the other (requires at least 2 words and high ratio)
+  if (minWords >= 2 && minWords / maxWords >= 0.6) {
+    const isSubset = (smaller: string[], larger: string[]) => smaller.every((w) => larger.includes(w));
+    if (wordsA.length <= wordsB.length && isSubset(wordsA, wordsB)) {
+      return true;
+    }
+    if (wordsB.length < wordsA.length && isSubset(wordsB, wordsA)) {
+      return true;
+    }
   }
 
-  // Same first two words match for titles with 2+ words
-  if (wordsA.length >= 2 && wordsB.length >= 2) {
-    if (wordsA[0] === wordsB[0] && wordsA[1] === wordsB[1]) {
+  // Token overlap check for longer titles (at least 3 words)
+  if (minWords >= 3) {
+    const commonWords = wordsA.filter((w) => wordsB.includes(w) && w.length > 2);
+    if (commonWords.length >= Math.ceil(minWords * 0.8)) {
       return true;
     }
   }

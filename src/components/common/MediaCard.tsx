@@ -84,7 +84,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item }) => {
       try {
         const fullAlbum = await musicApi.getAlbumById(id);
         if (fullAlbum.songs && fullAlbum.songs.length > 0) {
-          playSong(fullAlbum.songs[0], fullAlbum.songs);
+          playSong(fullAlbum.songs[0], fullAlbum.songs, 0);
         }
       } catch (err) {
         console.error('Failed to play album:', err);
@@ -95,12 +95,12 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item }) => {
     if (item.type === 'playlist') {
       const pl = item.data as Playlist;
       if (pl.isCustom && pl.songs && pl.songs.length > 0) {
-        playSong(pl.songs[0], pl.songs);
+        playSong(pl.songs[0], pl.songs, 0);
       } else {
         try {
           const fullPl = await musicApi.getPlaylistById(id);
           if (fullPl.songs && fullPl.songs.length > 0) {
-            playSong(fullPl.songs[0], fullPl.songs);
+            playSong(fullPl.songs[0], fullPl.songs, 0);
           }
         } catch (err) {
           console.error('Failed to play playlist:', err);
@@ -113,7 +113,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item }) => {
       try {
         const fullArtist = await musicApi.getArtistById(id);
         if (fullArtist.topSongs && fullArtist.topSongs.length > 0) {
-          playSong(fullArtist.topSongs[0], fullArtist.topSongs);
+          playSong(fullArtist.topSongs[0], fullArtist.topSongs, 0);
         }
       } catch (err) {
         console.error('Failed to play artist:', err);
